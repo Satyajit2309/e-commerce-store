@@ -1,0 +1,313 @@
+@page "/admin/products/edit/{Id:int}"
+@attribute [Authorize(Roles = EcommerceStore.Constants.Roles.Admin)]
+@using EcommerceStore.Services.Interfaces
+@using EcommerceStore.Models.Entities
+@inject IProductService ProductService
+@inject ICategoryService CategoryService
+@inject NavigationManager Nav
+@rendermode InteractiveServer
+
+<PageTitle>Edit Product | Admin | Futurbol</PageTitle>
+
+<style type="text/tailwindcss">
+    .futurbol-admin {
+        background-color: #000000;
+        color: #ffffff;
+        font-family: 'Space Grotesk', sans-serif;
+        background-image:
+            linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+        background-size: 50px 50px;
+    }
+
+    .lab-readout {
+        font-family: 'Space Grotesk', monospace;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+    }
+
+    .data-grid-border {
+        border: 1px solid rgba(255,255,255,0.1);
+        position: relative;
+    }
+
+    .data-grid-border::before {
+        content: '';
+        position: absolute;
+        top: -2px; left: -2px;
+        width: 14px; height: 14px;
+        border-top: 2px solid #0df20d;
+        border-left: 2px solid #0df20d;
+    }
+
+    .futurbol-input {
+        background: transparent;
+        border: 1px solid rgba(255,255,255,0.15);
+        color: #fff;
+        width: 100%;
+        outline: none;
+    }
+
+    .futurbol-input:focus { border-color: rgba(13,242,13,0.5); }
+
+    .futurbol-textarea {
+        background: transparent;
+        border: 1px solid rgba(255,255,255,0.15);
+        color: #fff;
+        width: 100%;
+        resize: vertical;
+        outline: none;
+    }
+
+    .futurbol-textarea:focus { border-color: rgba(13,242,13,0.5); }
+
+    .futurbol-select {
+        background: #000;
+        border: 1px solid rgba(255,255,255,0.15);
+        color: #fff;
+        width: 100%;
+        outline: none;
+    }
+
+    .futurbol-select:focus { border-color: rgba(13,242,13,0.5); }
+
+    .field-label {
+        display: block;
+        font-size: 10px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: rgba(255,255,255,0.4);
+        margin-bottom: 6px;
+        font-family: 'Space Grotesk', monospace;
+    }
+</style>
+
+<div class="futurbol-admin min-h-screen px-6 lg:px-20 py-16">
+    @* Header *@
+    <div class="flex flex-col md:flex-row items-start md:items-center justify-between mb-12 gap-6">
+        <div>
+            <div class="flex items-center gap-3 mb-3">
+                <div class="w-2 h-2 bg-alert rounded-full animate-pulse"></div>
+                <span class="text-[10px] lab-readout font-bold text-alert">Admin // Edit Unit</span>
+            </div>
+            <h1 class="text-4xl md:text-5xl font-bold uppercase tracking-tighter">Edit Product</h1>
+        </div>
+        <a href="/admin/products" class="border border-white/30 px-4 py-2 text-[10px] lab-readout hover:bg-white hover:text-black transition-all no-underline text-white">
+            ← Back to Products
+        </a>
+    </div>
+
+    @if (_loading)
+    {
+        <div class="flex items-center gap-3 text-white/40 text-sm lab-readout">
+            <div class="w-2 h-2 bg-alert rounded-full animate-pulse"></div>Loading unit data...
+        </div>
+    }
+    else if (_notFound)
+    {
+        <div class="border border-white/10 p-12 text-center max-w-md">
+            <div class="text-white/30 text-sm lab-readout mb-4">Product not found in registry.</div>
+            <a href="/admin/products" class="border border-white/30 px-6 py-3 text-[10px] lab-readout hover:bg-white hover:text-black transition-all no-underline text-white inline-block">
+                Back to Products
+            </a>
+        </div>
+    }
+    else
+    {
+        @if (!string.IsNullOrEmpty(_errorMessage))
+        {
+            <div class="border border-red-500/40 px-6 py-4 mb-8 text-[10px] lab-readout text-red-400 flex items-center gap-3">
+                <span class="material-symbols-outlined text-sm">error</span>
+                @_errorMessage
+            </div>
+        }
+
+        @if (!string.IsNullOrEmpty(_successMessage))
+        {
+            <div class="border border-alert/40 px-6 py-4 mb-8 text-[10px] lab-readout text-alert flex items-center gap-3">
+                <span class="material-symbols-outlined text-sm">check_circle</span>
+                @_successMessage
+            </div>
+        }
+
+        <div class="data-grid-border bg-black/60 p-8 md:p-10 max-w-2xl">
+            <div class="text-[10px] lab-readout text-white/30 mb-6">Unit ID: #@Id.ToString("D4")</div>
+
+            <EditForm Model="_form" OnValidSubmit="HandleSubmit">
+                <DataAnnotationsValidator />
+
+                <div class="space-y-6">
+                    <div>
+                        <label class="field-label">Product Name *</label>
+                        <InputText class="futurbol-input px-4 py-3 text-sm" @bind-Value="_form.Name" />
+                        <ValidationMessage For="() => _form.Name" class="text-[10px] text-red-400 mt-1 lab-readout block" />
+                    </div>
+
+                    <div>
+                        <label class="field-label">Description</label>
+                        <InputTextArea class="futurbol-textarea px-4 py-3 text-sm" rows="3" @bind-Value="_form.Description" />
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="field-label">Price ($) *</label>
+                            <InputNumber class="futurbol-input px-4 py-3 text-sm" @bind-Value="_form.Price" />
+                            <ValidationMessage For="() => _form.Price" class="text-[10px] text-red-400 mt-1 lab-readout block" />
+                        </div>
+                        <div>
+                            <label class="field-label">Stock *</label>
+                            <InputNumber class="futurbol-input px-4 py-3 text-sm" @bind-Value="_form.Stock" />
+                            <ValidationMessage For="() => _form.Stock" class="text-[10px] text-red-400 mt-1 lab-readout block" />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="field-label">Category *</label>
+                        <InputSelect class="futurbol-select px-4 py-3 text-sm" @bind-Value="_form.CategoryId">
+                            <option value="0">-- Select Category --</option>
+                            @foreach (var cat in _categories)
+                            {
+                                <option value="@cat.Id">@cat.Name</option>
+                            }
+                        </InputSelect>
+                        <ValidationMessage For="() => _form.CategoryId" class="text-[10px] text-red-400 mt-1 lab-readout block" />
+                    </div>
+
+                    <div>
+                        <label class="field-label">Image URL</label>
+                        <InputText class="futurbol-input px-4 py-3 text-sm" @bind-Value="_form.ImageUrl" placeholder="https://..." />
+                    </div>
+
+                    <div class="flex items-center gap-3">
+                        <InputCheckbox id="isActive" class="w-4 h-4 accent-alert" @bind-Value="_form.IsActive" />
+                        <label for="isActive" class="text-[10px] lab-readout text-white/60 cursor-pointer">Active (visible in catalog)</label>
+                    </div>
+
+                    <div class="flex gap-4 pt-4 border-t border-white/10">
+                        <button type="submit"
+                                disabled="@_submitting"
+                                class="flex-1 bg-white text-black px-8 py-4 text-sm lab-readout font-bold hover:bg-alert transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-3">
+                            @if (_submitting)
+                            {
+                                <div class="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
+                            }
+                            Save Changes
+                        </button>
+                        <a href="/admin/products"
+                           class="border border-white/30 px-8 py-4 text-sm lab-readout font-bold hover:bg-white/10 transition-colors no-underline text-white flex items-center justify-center">
+                            Cancel
+                        </a>
+                    </div>
+                </div>
+            </EditForm>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private List<Category>   _categories     = [];
+    private ProductFormModel  _form           = new();
+    private string            _errorMessage   = string.Empty;
+    private string            _successMessage = string.Empty;
+    private bool              _loading        = true;
+    private bool              _notFound       = false;
+    private bool              _submitting     = false;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _loading    = true;
+        _categories = await CategoryService.GetCategoriesAsync();
+        var product = await ProductService.GetProductByIdAsync(Id);
+
+        if (product is null)
+        {
+            _notFound = true;
+        }
+        else
+        {
+            _form = new ProductFormModel
+            {
+                Name        = product.Name,
+                Description = product.Description,
+                Price       = product.Price,
+                Stock       = product.Stock,
+                CategoryId  = product.CategoryId,
+                ImageUrl    = product.ImageUrl,
+                IsActive    = product.IsActive
+            };
+        }
+
+        _loading = false;
+    }
+
+    private async Task HandleSubmit()
+    {
+        if (_form.CategoryId == 0)
+        {
+            _errorMessage = "Please select a category.";
+            return;
+        }
+
+        _submitting     = true;
+        _errorMessage   = string.Empty;
+        _successMessage = string.Empty;
+
+        try
+        {
+            var updated = await ProductService.UpdateProductAsync(new Product
+            {
+                Id          = Id,
+                Name        = _form.Name,
+                Description = _form.Description,
+                Price       = _form.Price,
+                Stock       = _form.Stock,
+                CategoryId  = _form.CategoryId,
+                ImageUrl    = _form.ImageUrl,
+                IsActive    = _form.IsActive
+            });
+
+            if (updated is null)
+            {
+                _errorMessage = "Product not found.";
+            }
+            else
+            {
+                _successMessage = "Product updated successfully.";
+            }
+        }
+        catch
+        {
+            _errorMessage = "An error occurred while saving. Please try again.";
+        }
+        finally
+        {
+            _submitting = false;
+        }
+    }
+
+    private class ProductFormModel
+    {
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Name is required.")]
+        [System.ComponentModel.DataAnnotations.StringLength(200)]
+        public string Name { get; set; } = string.Empty;
+
+        public string? Description { get; set; }
+
+        [System.ComponentModel.DataAnnotations.Required]
+        [System.ComponentModel.DataAnnotations.Range(0.01, 100000, ErrorMessage = "Price must be greater than 0.")]
+        public decimal Price { get; set; }
+
+        [System.ComponentModel.DataAnnotations.Required]
+        [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue, ErrorMessage = "Stock cannot be negative.")]
+        public int Stock { get; set; }
+
+        [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue, ErrorMessage = "Please select a category.")]
+        public int CategoryId { get; set; }
+
+        public string? ImageUrl { get; set; }
+
+        public bool IsActive { get; set; } = true;
+    }
+}

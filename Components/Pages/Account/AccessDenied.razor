@@ -1,0 +1,79 @@
+@page "/account/access-denied"
+
+<PageTitle>Access Denied | Futurbol</PageTitle>
+
+<style type="text/tailwindcss">
+    .futurbol-auth {
+        background-color: #000000;
+        color: #ffffff;
+        font-family: 'Space Grotesk', sans-serif;
+        background-image:
+            linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+        background-size: 50px 50px;
+    }
+
+    .auth-card {
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        position: relative;
+    }
+
+    .auth-card::before {
+        content: '';
+        position: absolute;
+        top: -2px;
+        left: -2px;
+        width: 14px;
+        height: 14px;
+        border-top: 2px solid #ef4444;
+        border-left: 2px solid #ef4444;
+    }
+
+    .auth-card::after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        right: -2px;
+        width: 14px;
+        height: 14px;
+        border-bottom: 2px solid #ef4444;
+        border-right: 2px solid #ef4444;
+    }
+
+    .lab-readout {
+        font-family: 'Space Grotesk', monospace;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+    }
+</style>
+
+<div class="futurbol-auth min-h-screen flex items-center justify-center px-4 py-16 overflow-hidden relative">
+    <div class="absolute inset-0 pointer-events-none flex items-center justify-center">
+        <div class="w-full h-px bg-white/5 absolute"></div>
+        <div class="h-full w-px bg-white/5 absolute"></div>
+    </div>
+
+    <div class="w-full max-w-md relative z-10">
+        <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center gap-3">
+                <div class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                <span class="text-[10px] lab-readout font-bold text-red-400">Warning: Unauthorized</span>
+            </div>
+            <span class="text-[10px] lab-readout text-white/30">Error_403</span>
+        </div>
+
+        <div class="auth-card bg-black/60 backdrop-blur-sm p-8 md:p-10 text-center">
+            <div class="mb-6">
+                <span class="material-symbols-outlined text-red-400 text-6xl mb-4 block">shield_lock</span>
+                <h1 class="text-3xl font-bold uppercase tracking-tighter mb-2">Access Denied</h1>
+                <p class="text-white/40 text-xs lab-readout">You do not have permission to access this resource</p>
+            </div>
+
+            <a href="/"
+               class="inline-flex items-center justify-center gap-3 bg-white text-black px-8 py-4 text-xs lab-readout font-bold hover:bg-alert transition-colors no-underline">
+                <span class="material-symbols-outlined text-base">home</span>
+                Return Home
+            </a>
+        </div>
+    </div>
+</div>

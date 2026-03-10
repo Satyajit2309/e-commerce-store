@@ -1,0 +1,200 @@
+@page "/catalog/{Id:int}"
+@using EcommerceStore.Services.Interfaces
+@using EcommerceStore.Models.Entities
+@inject IProductService ProductService
+@inject NavigationManager Nav
+@rendermode InteractiveServer
+
+<PageTitle>@(_product?.Name ?? "Product") | Futurbol</PageTitle>
+
+<style type="text/tailwindcss">
+    :root { --alert-color: #0df20d; }
+
+    .futurbol-page {
+        background-color: #000000;
+        color: #ffffff;
+        font-family: 'Space Grotesk', sans-serif;
+        background-image:
+            linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+        background-size: 50px 50px;
+    }
+
+    .lab-readout {
+        font-family: 'Space Grotesk', monospace;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+    }
+
+    .data-grid-border {
+        border: 1px solid rgba(255,255,255,0.1);
+        position: relative;
+    }
+
+    .data-grid-border::before {
+        content: '';
+        position: absolute;
+        top: -2px; left: -2px;
+        width: 10px; height: 10px;
+        border-top: 2px solid var(--alert-color);
+        border-left: 2px solid var(--alert-color);
+    }
+
+    .data-grid-border::after {
+        content: '';
+        position: absolute;
+        bottom: -2px; right: -2px;
+        width: 10px; height: 10px;
+        border-bottom: 2px solid var(--alert-color);
+        border-right: 2px solid var(--alert-color);
+    }
+</style>
+
+<div class="futurbol-page min-h-screen overflow-x-hidden">
+    @* Navbar *@
+    <nav class="fixed top-0 left-0 w-full z-50 border-b border-white/20 bg-black/80 backdrop-blur-md">
+        <div class="flex items-center justify-between px-6 py-4">
+            <div class="flex flex-col">
+                <span class="text-xs text-alert lab-readout font-bold leading-none">Status: Active</span>
+                <a href="/" class="text-2xl font-bold tracking-tighter uppercase no-underline text-white">Futurbol//Lab</a>
+            </div>
+            <div class="flex items-center gap-3">
+                <a href="/catalog" class="text-[10px] lab-readout text-alert border-b border-alert pb-0.5">Catalog</a>
+                <AuthorizeView>
+                    <Authorized Context="authState">
+                        <a class="border border-white/30 px-4 py-2 text-[10px] lab-readout hover:bg-white hover:text-black transition-all no-underline text-white" href="/account/logout">Logout</a>
+                    </Authorized>
+                    <NotAuthorized>
+                        <a class="border border-white/30 px-4 py-2 text-[10px] lab-readout hover:bg-white hover:text-black transition-all no-underline text-white" href="/account/login">Login</a>
+                    </NotAuthorized>
+                </AuthorizeView>
+                <button class="border border-white/30 px-4 py-2 text-[10px] lab-readout hover:bg-white hover:text-black transition-all">Cart (0)</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="pt-28 pb-20 px-6 lg:px-20">
+        <div class="mb-8">
+            <a href="/catalog" class="text-[10px] lab-readout text-white/40 hover:text-alert transition-colors no-underline flex items-center gap-2">
+                <span class="material-symbols-outlined text-sm">arrow_back</span>Back to Catalog
+            </a>
+        </div>
+
+        @if (_loading)
+        {
+            <div class="flex items-center gap-3 text-white/40 text-sm lab-readout">
+                <div class="w-2 h-2 bg-alert rounded-full animate-pulse"></div>Loading unit data...
+            </div>
+        }
+        else if (_product is null)
+        {
+            <div class="border border-white/10 p-12 text-center">
+                <div class="text-white/30 text-sm lab-readout mb-4">Unit not found in registry.</div>
+                <a href="/catalog" class="border border-white/30 px-6 py-3 text-[10px] lab-readout hover:bg-white hover:text-black transition-all no-underline text-white inline-block">
+                    Return to Catalog
+                </a>
+            </div>
+        }
+        else
+        {
+            <div class="grid lg:grid-cols-2 gap-16 items-start">
+                @* Image panel *@
+                <div class="data-grid-border bg-black p-6">
+                    <div class="absolute -top-5 right-0 text-alert text-[10px] lab-readout">Unit ID: #@_product.Id.ToString("D4")</div>
+                    <div class="aspect-square flex items-center justify-center border border-white/5 overflow-hidden bg-white/[0.02]">
+                        @if (!string.IsNullOrWhiteSpace(_product.ImageUrl))
+                        {
+                            <img alt="@_product.Name"
+                                 class="w-full h-full object-contain grayscale brightness-110"
+                                 src="@_product.ImageUrl" />
+                        }
+                        else
+                        {
+                            <span class="material-symbols-outlined text-white/10 text-9xl">checkroom</span>
+                        }
+                    </div>
+                </div>
+
+                @* Details panel *@
+                <div class="space-y-10">
+                    <div>
+                        <div class="flex items-center gap-3 mb-3">
+                            <div class="w-2 h-2 bg-alert rounded-full animate-pulse"></div>
+                            <span class="text-[10px] lab-readout font-bold text-alert">@_product.Category?.Name</span>
+                        </div>
+                        <h1 class="text-4xl md:text-5xl font-bold uppercase tracking-tighter mb-4">@_product.Name</h1>
+                        @if (!string.IsNullOrWhiteSpace(_product.Description))
+                        {
+                            <p class="text-white/60 text-sm leading-relaxed border-l border-white/20 pl-4">@_product.Description</p>
+                        }
+                    </div>
+
+                    @* Specs *@
+                    <div class="grid grid-cols-2 gap-px bg-white/10 border border-white/10">
+                        <div class="bg-black p-6">
+                            <div class="text-[10px] lab-readout text-white/40 mb-1">Unit Price</div>
+                            <div class="text-3xl font-bold">$@_product.Price.ToString("F2")</div>
+                        </div>
+                        <div class="bg-black p-6">
+                            <div class="text-[10px] lab-readout text-white/40 mb-1">Stock</div>
+                            <div class="text-3xl font-bold @(_product.Stock > 0 ? "" : "text-red-400")">
+                                @(_product.Stock > 0 ? _product.Stock.ToString() : "0")
+                            </div>
+                            <div class="text-[8px] lab-readout @(_product.Stock > 0 ? "text-alert" : "text-red-400") mt-1">
+                                @(_product.Stock > 0 ? "Available" : "Out of stock")
+                            </div>
+                        </div>
+                    </div>
+
+                    @* CTA *@
+                    <div class="space-y-3">
+                        <button class="w-full bg-white text-black px-8 py-5 text-sm lab-readout font-bold hover:bg-alert transition-colors flex items-center justify-center gap-3 disabled:opacity-40 disabled:cursor-not-allowed"
+                                disabled="@(_product.Stock == 0)">
+                            <span class="material-symbols-outlined">add_shopping_cart</span>
+                            @(_product.Stock > 0 ? "Add to Cart" : "Out of Stock")
+                        </button>
+                        <a href="/catalog"
+                           class="w-full border border-white/30 px-8 py-4 text-xs lab-readout font-bold hover:bg-white/10 transition-colors flex items-center justify-center gap-3 no-underline text-white">
+                            Continue Shopping
+                        </a>
+                    </div>
+
+                    @* Data readout *@
+                    <div class="grid grid-cols-2 gap-4 text-[10px] lab-readout text-white/40">
+                        <div class="border-l border-white/20 pl-4">
+                            <div class="text-alert mb-1">DATA_PACKET_01</div>
+                            <div>Category: @(_product.Category?.Name ?? "N/A")</div>
+                            <div>ID: #@_product.Id.ToString("D4")</div>
+                        </div>
+                        <div class="border-l border-white/20 pl-4">
+                            <div class="text-alert mb-1">DATA_PACKET_02</div>
+                            <div>Status: @(_product.IsActive ? "Active" : "Inactive")</div>
+                            <div>Units: @_product.Stock</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </main>
+
+    <footer class="bg-black py-12 px-6 lg:px-20 border-t border-white/10">
+        <div class="flex justify-between items-center text-[8px] lab-readout text-white/20">
+            <p>(C) 2024 FUTURBOL APPAREL. ALL RIGHTS RESERVED.</p>
+            <a href="/" class="hover:text-alert transition-colors no-underline text-white/20">Home</a>
+        </div>
+    </footer>
+</div>
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private Product? _product;
+    private bool     _loading = true;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _loading = true;
+        _product = await ProductService.GetProductByIdAsync(Id);
+        _loading = false;
+    }
+}

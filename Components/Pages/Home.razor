@@ -1,0 +1,363 @@
+@page "/"
+
+<PageTitle>Futurbol | Football Jersey Store</PageTitle>
+
+<style type="text/tailwindcss">
+    :root {
+        --alert-color: #0df20d;
+    }
+
+    .futurbol-page {
+        background-color: #000000;
+        color: #ffffff;
+        font-family: 'Space Grotesk', sans-serif;
+        background-image:
+            linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+        background-size: 50px 50px;
+    }
+
+    .data-grid-border {
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        position: relative;
+    }
+
+    .data-grid-border::before {
+        content: '';
+        position: absolute;
+        top: -2px;
+        left: -2px;
+        width: 10px;
+        height: 10px;
+        border-top: 2px solid var(--alert-color);
+        border-left: 2px solid var(--alert-color);
+    }
+
+    .scanline {
+        width: 100%;
+        height: 1px;
+        background: var(--alert-color);
+        position: absolute;
+        top: 0;
+        left: 0;
+        opacity: 0.3;
+        pointer-events: none;
+        z-index: 10;
+    }
+
+    .lab-readout {
+        font-family: 'Space Grotesk', monospace;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+    }
+
+    .deconstructed-frame {
+        position: relative;
+        padding: 2rem;
+        border-left: 1px solid white;
+        border-bottom: 1px solid white;
+    }
+
+    .futurbol-page ::-webkit-scrollbar {
+        width: 4px;
+    }
+
+    .futurbol-page ::-webkit-scrollbar-track {
+        background: #000;
+    }
+
+    .futurbol-page ::-webkit-scrollbar-thumb {
+        background: #fff;
+    }
+</style>
+
+<div class="futurbol-page overflow-x-hidden selection:bg-alert selection:text-black">
+    <nav class="fixed top-0 left-0 w-full z-50 border-b border-white/20 bg-black/80 backdrop-blur-md">
+        <div class="flex items-center justify-between px-6 py-4">
+            <div class="flex items-center gap-4">
+                <div class="flex flex-col">
+                    <span class="text-xs text-alert lab-readout font-bold leading-none">Status: Active</span>
+                    <span class="text-2xl font-bold tracking-tighter uppercase">Futurbol//Lab</span>
+                </div>
+            </div>
+            <div class="hidden lg:flex gap-12 text-[10px] lab-readout font-bold">
+                <a class="hover:text-alert transition-colors flex items-center gap-2" href="/catalog"><span class="w-1 h-1 bg-white"></span>New Arrivals</a>
+                <a class="hover:text-alert transition-colors flex items-center gap-2" href="/catalog"><span class="w-1 h-1 bg-white"></span>Clubs</a>
+                <a class="hover:text-alert transition-colors flex items-center gap-2" href="/catalog"><span class="w-1 h-1 bg-white"></span>National Teams</a>
+                <a class="hover:text-alert transition-colors flex items-center gap-2" href="#"><span class="w-1 h-1 bg-white"></span>Customizer</a>
+            </div>
+            <div class="flex items-center gap-3">
+                <AuthorizeView>
+                    <Authorized Context="authState">
+                        <a class="border border-white/30 px-4 py-2 text-[10px] lab-readout hover:bg-white hover:text-black transition-all" href="/account/logout">
+                            Logout
+                        </a>
+                        <AuthorizeView Roles="@Roles.Admin" Context="adminAuthState">
+                            <a class="border border-alert/40 px-4 py-2 text-[10px] lab-readout text-alert hover:bg-alert hover:text-black transition-all" href="/admin">
+                                Admin
+                            </a>
+                        </AuthorizeView>
+                    </Authorized>
+                    <NotAuthorized>
+                        <a class="border border-white/30 px-4 py-2 text-[10px] lab-readout hover:bg-white hover:text-black transition-all" href="/account/login">
+                            Login
+                        </a>
+                        <a class="border border-alert/40 px-4 py-2 text-[10px] lab-readout text-alert hover:bg-alert hover:text-black transition-all" href="/account/register">
+                            Register
+                        </a>
+                    </NotAuthorized>
+                </AuthorizeView>
+                <button class="border border-white/30 px-4 py-2 text-[10px] lab-readout hover:bg-white hover:text-black transition-all">
+                    Cart (0)
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="min-h-screen pt-32 pb-20 px-6 lg:px-20 grid lg:grid-cols-12 gap-8">
+        <div class="lg:col-span-5 flex flex-col justify-center space-y-12">
+            <div class="space-y-4">
+                <div class="flex items-center gap-4 text-alert">
+                    <span class="material-symbols-outlined text-sm">sensors</span>
+                    <span class="text-[10px] lab-readout font-bold">Neural Sync: Enabled</span>
+                </div>
+                <h1 class="text-6xl md:text-8xl font-bold leading-[0.85] uppercase tracking-tighter">
+                    WEAR THE <br />
+                    <span class="inline-block border-2 border-white px-4 py-2 mt-2">FUTURE</span> <br />
+                    OF FOOTBALL.
+                </h1>
+            </div>
+            <div class="deconstructed-frame max-w-sm">
+                <p class="text-white/60 text-sm leading-relaxed mb-8">
+                    Experience the next generation of performance wear. Interactive fabrics, 3D knit technology, and unmatched style.
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <a href="/catalog" class="bg-white text-black px-8 py-4 text-xs lab-readout font-bold hover:bg-alert transition-colors no-underline inline-block">
+                        Shop the Collection
+                    </a>
+                    <button class="border border-white/30 px-8 py-4 text-xs lab-readout font-bold hover:bg-white/10 transition-colors">
+                        Create Your Own
+                    </button>
+                </div>
+            </div>
+            <div class="hidden lg:grid grid-cols-2 gap-4 text-[10px] lab-readout text-white/40">
+                <div class="border-l border-white/20 pl-4">
+                    <div class="text-alert mb-1">DATA_PACKET_01</div>
+                    <div>Fiber density: 400.22 tex</div>
+                    <div>Thermal regulation: Adaptive</div>
+                </div>
+                <div class="border-l border-white/20 pl-4">
+                    <div class="text-alert mb-1">DATA_PACKET_02</div>
+                    <div>Aero-drag coeff: 0.12</div>
+                    <div>Tensile strength: 1200 N</div>
+                </div>
+            </div>
+        </div>
+        <div class="lg:col-span-7 relative flex items-center justify-center">
+            <div class="absolute inset-0 pointer-events-none border-x border-white/5 flex items-center justify-center">
+                <div class="w-full h-px bg-white/10 absolute"></div>
+                <div class="h-full w-px bg-white/10 absolute"></div>
+                <div class="w-20 h-20 border border-alert/30 rounded-full absolute"></div>
+            </div>
+            <div class="relative z-10 w-full max-w-2xl data-grid-border p-4 bg-black">
+                <div class="absolute -top-6 right-0 text-alert text-[10px] lab-readout">Visual Analysis [88%]</div>
+                <img alt="Futuristic Jersey Render" class="w-full grayscale brightness-110 contrast-125" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCsx2LaEtD8PdNvZNAv9wBc2QO2dJEtRcUy1QaNEf-x8Qb1VbxsEUv82vfLjqB9N1toUOafjlhxh0flps1sPjOJJXYMio1OparQTNhJ9Kfd0U5LU6ccVMd8D4UwQx4WImzRlU3-ULWdy-J3p-MrKEDbA7yjaVkWl-X_ePZgybCbkFS-H-LTiXi2z8Y_wkDuXu3cOfmjlDRs8GEYPRkV0I846R8_wDvrnaaKH0B3bRU0jo3t4DLnUvBOo4MGgQo_LLq1GTP6CHmo0F4" />
+                <div class="absolute inset-4 border border-white/10 pointer-events-none overflow-hidden">
+                    <div class="scanline"></div>
+                    <div class="absolute top-1/4 left-1/4 flex items-center gap-2">
+                        <div class="w-2 h-2 bg-alert rounded-full animate-pulse"></div>
+                        <div class="text-[8px] lab-readout bg-black/80 px-1 border border-alert/30">Micro-ventilation Zone</div>
+                    </div>
+                    <div class="absolute bottom-1/3 right-1/4 flex items-center gap-2">
+                        <div class="w-2 h-2 bg-alert rounded-full animate-pulse"></div>
+                        <div class="text-[8px] lab-readout bg-black/80 px-1 border border-alert/30">Haptic Pattern G04</div>
+                    </div>
+                </div>
+            </div>
+            <div class="absolute top-0 right-10 w-32 grayscale opacity-40">
+                <img alt="Floating Football" class="w-full" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDB2Sr7L5i_nfDLzrJAyR66PGbvhDTTQCab5yVeJDG1LajFShLCL4ovgB7NchqT1wbVYa8lFvkj6e1ZJd02yzkhrHNpMyal730Gr7q1gkPOHzFG2tNE9TrFa42GkIaona5soBhSeZlGksGEaYPbUFd3b1ytu5fno_6X9oDCBYZy4S7sb22j0lHlU1l2Dp-wEpZ9QxRmnpvx5W9Z3N6VcjDNdyvWD7SR4n9SJy8ofny02CCbr7HlG8ehHMLufCQnszZ0tOpuX5vOfaI" />
+                <div class="text-[8px] lab-readout mt-2 border-t border-white/20 pt-1">Geometry: Sphere [V-04]</div>
+            </div>
+        </div>
+    </main>
+
+    <section class="py-32 border-t border-white/20 bg-black relative">
+        <div class="px-6 lg:px-20">
+            <div class="flex flex-col lg:flex-row justify-between items-start mb-24 gap-12">
+                <div class="relative">
+                    <div class="absolute -top-8 left-0 text-alert text-[10px] lab-readout">Registry: S-2024</div>
+                    <h2 class="text-5xl md:text-7xl font-bold uppercase tracking-tighter">Pro Series <span class="text-alert italic">2024</span></h2>
+                </div>
+                <div class="max-w-xs border-r border-white/40 pr-8 text-right self-end">
+                    <p class="text-white/40 uppercase text-[10px] lab-readout leading-loose">Limited release high-performance kits engineered for the elite.</p>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-white/10 border border-white/10">
+                <div class="group relative bg-black p-10 hover:bg-lab-gray transition-colors">
+                    <div class="flex justify-between items-start mb-12">
+                        <div>
+                            <span class="text-alert text-[10px] lab-readout font-bold">Spec: Limited</span>
+                            <h3 class="text-2xl font-bold mt-2 uppercase">Neon Strike V2</h3>
+                        </div>
+                        <span class="text-white/20 lab-readout text-xl">01</span>
+                    </div>
+                    <div class="relative aspect-square mb-12 flex items-center justify-center grayscale group-hover:grayscale-0 transition-all">
+                        <img alt="Jersey 1" class="w-full h-full object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBjVZprmP2dMJoZyoqdfrh6-ageADxNuNJQShmAqnh26YRQ18f4beVkUMVIRSyJFyfCszta_W2OqzCTO5KXFzhvhDxhsA2JwdKVZQ31MdmlckdFncmD3UbDXVB-YbGhGNeS1YvzbYgZwQVWhE8yW08dqU3m1Tc8fg95_qpkyLqeeh8LqZR9H9bEKNVkiztetswlanObE1zXSjjIq3X74tVdaR9FnW4roZc4VN6enPKQi1s_hr5vC7u78kRZOSphi5-bo1PhPJo4-fM" />
+                        <div class="absolute inset-0 border border-white/5 group-hover:border-alert/30 transition-colors"></div>
+                    </div>
+                    <div class="flex justify-between items-end">
+                        <div class="lab-readout">
+                            <div class="text-[10px] text-white/40">Unit Price</div>
+                            <span class="text-2xl font-bold">$129.00</span>
+                        </div>
+                        <button class="w-12 h-12 flex items-center justify-center border border-white/30 hover:bg-alert hover:text-black hover:border-alert transition-all">
+                            <span class="material-symbols-outlined">add</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="group relative bg-black p-10 hover:bg-lab-gray transition-colors">
+                    <div class="flex justify-between items-start mb-12">
+                        <div>
+                            <span class="text-white/40 text-[10px] lab-readout font-bold">Spec: New_Drop</span>
+                            <h3 class="text-2xl font-bold mt-2 uppercase">Cyber City Kit</h3>
+                        </div>
+                        <span class="text-white/20 lab-readout text-xl">02</span>
+                    </div>
+                    <div class="relative aspect-square mb-12 flex items-center justify-center grayscale group-hover:grayscale-0 transition-all">
+                        <img alt="Jersey 2" class="w-full h-full object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBiCM5-5VPmXi7xnd7pgB70Yqzb6TijBZIINhunQsPDCCnwIkKqHMkQDj2j8Ie_gliKGMUI9OeubepYDM69dThHyU1QZpu7O2hgswQjHkkx4FoGmp4unE3N8Qdnl7zfQsCM_Ivz30XcqZpEpXxurSDVm8RploIXSxZ9wnE_4J44eR1bPNu9itNruBjwTc3ADveIfyom6esX-gcp-UVmVkY-j3r94QJmHGhbeQbdXu1MfvVPqLnuof65AyAK-qvTf18pEgIRjvcvths" />
+                        <div class="absolute inset-0 border border-white/5 group-hover:border-alert/30 transition-colors"></div>
+                    </div>
+                    <div class="flex justify-between items-end">
+                        <div class="lab-readout">
+                            <div class="text-[10px] text-white/40">Unit Price</div>
+                            <span class="text-2xl font-bold">$110.00</span>
+                        </div>
+                        <button class="w-12 h-12 flex items-center justify-center border border-white/30 hover:bg-alert hover:text-black hover:border-alert transition-all">
+                            <span class="material-symbols-outlined">add</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="group relative bg-black p-10 hover:bg-lab-gray transition-colors">
+                    <div class="flex justify-between items-start mb-12">
+                        <div>
+                            <span class="text-alert text-[10px] lab-readout font-bold">Spec: Best_Sell</span>
+                            <h3 class="text-2xl font-bold mt-2 uppercase">Phantom Stealth</h3>
+                        </div>
+                        <span class="text-white/20 lab-readout text-xl">03</span>
+                    </div>
+                    <div class="relative aspect-square mb-12 flex items-center justify-center grayscale group-hover:grayscale-0 transition-all">
+                        <img alt="Jersey 3" class="w-full h-full object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAZRK54ss8KCFvktiTLFkVT2pBLyHmLijMuwT1KDpSETa8sZQrhkKGseBYzrO0IqzPY3N6KiK7JnOkb-MyuqkUCh58i-hWTTQPlDcBjeZKR8CVjluIoBtFIDnPBfeFu8kdHEhKb5rVMSsIc4Y_uSbaiIsevzzbCts7WqI-3WxWg_Ircn1l3Awu4dqYtqFbYiYVAsMKdKy_V2rAFefiqGjS-MirHHbO0j8L0vgc6OcLwBcWbZsPnq79z3j9aXFMd4jWvLj-A1zxFCzo" />
+                        <div class="absolute inset-0 border border-white/5 group-hover:border-alert/30 transition-colors"></div>
+                    </div>
+                    <div class="flex justify-between items-end">
+                        <div class="lab-readout">
+                            <div class="text-[10px] text-white/40">Unit Price</div>
+                            <span class="text-2xl font-bold">$145.00</span>
+                        </div>
+                        <button class="w-12 h-12 flex items-center justify-center border border-white/30 hover:bg-alert hover:text-black hover:border-alert transition-all">
+                            <span class="material-symbols-outlined">add</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="py-32 px-6 lg:px-20 border-b border-white/10">
+        <div class="grid lg:grid-cols-2 gap-20 items-center">
+            <div class="order-2 lg:order-1 relative p-4 data-grid-border bg-black">
+                <div class="absolute -bottom-6 left-0 text-alert text-[10px] lab-readout">System Interface: Custom_V1.0</div>
+                <div class="aspect-video bg-lab-gray flex items-center justify-center relative overflow-hidden group">
+                    <img alt="Customizer UI" class="w-full h-full object-cover grayscale opacity-80" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCCCdoYeBgABJfpcmH6rXkkHKzlsDeOQ-GZK4WJWM2E762veLlGpJOH-FA4JTGYGB-AjcBIegkEF-t5VLkCoHs7-XFEFagY2Wt3QdkY59We869KnnL19dCDqW9qsivl-6NSYAZTOHOvDRkH0s_vFNxB8PO8MtuC0ezvhigyrvTK1qiksrRrqVqLkpfRF2BRNebBvw5o7ydi4KieGwVwQLWqt3BxUKV41TYXEky1sOeusOrWM1EQJZaw1dtcOW86awUh7cdbnG2QKvk" />
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <div class="w-20 h-20 border-2 border-alert rounded-full flex items-center justify-center animate-pulse">
+                            <span class="material-symbols-outlined text-alert text-4xl">play_arrow</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-4 gap-4 mt-8">
+                    <div class="h-1 bg-alert"></div>
+                    <div class="h-1 bg-white/20"></div>
+                    <div class="h-1 bg-white/20"></div>
+                    <div class="h-1 bg-white/20"></div>
+                </div>
+            </div>
+            <div class="order-1 lg:order-2 space-y-12">
+                <div>
+                    <h2 class="text-5xl md:text-7xl font-bold mb-8 uppercase leading-[0.85] tracking-tighter">UNLEASH YOUR <br /><span class="text-alert italic">CREATIVITY.</span></h2>
+                    <p class="text-white/60 text-lg max-w-lg leading-relaxed">
+                        Our 3D Customizer allows you to design every inch of your kit. From textures to thermal-mapped ventilation patterns.
+                    </p>
+                </div>
+                <div class="space-y-6">
+                    <div class="flex items-center gap-6 border-b border-white/10 pb-4 group">
+                        <span class="text-alert lab-readout text-xs font-bold">01</span>
+                        <span class="text-sm lab-readout tracking-widest group-hover:text-alert transition-colors">Real-time 3D Rendering</span>
+                    </div>
+                    <div class="flex items-center gap-6 border-b border-white/10 pb-4 group">
+                        <span class="text-alert lab-readout text-xs font-bold">02</span>
+                        <span class="text-sm lab-readout tracking-widest group-hover:text-alert transition-colors">Premium Fabric Selection</span>
+                    </div>
+                    <div class="flex items-center gap-6 border-b border-white/10 pb-4 group">
+                        <span class="text-alert lab-readout text-xs font-bold">03</span>
+                        <span class="text-sm lab-readout tracking-widest group-hover:text-alert transition-colors">Worldwide Shipping</span>
+                    </div>
+                </div>
+                <button class="w-full bg-white text-black px-12 py-6 text-sm lab-readout font-bold hover:bg-alert transition-colors flex items-center justify-center gap-4">
+                    Launch Customizer
+                    <span class="material-symbols-outlined">launch</span>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <footer class="bg-black py-20 px-6 lg:px-20 border-t border-white/10">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-16 mb-24">
+            <div>
+                <div class="flex items-center gap-3 mb-8">
+                    <div class="w-4 h-4 bg-alert"></div>
+                    <span class="text-xl font-bold tracking-tighter uppercase">Futurbol</span>
+                </div>
+                <p class="text-white/40 text-xs lab-readout leading-loose max-w-[240px]">
+                    Pushing the boundaries of football apparel through technology and 3D design innovation.
+                </p>
+            </div>
+            <div>
+                <h4 class="text-[10px] lab-readout font-bold text-white mb-8 border-b border-white/10 pb-2">Navigation</h4>
+                <ul class="space-y-4 text-white/40 text-[10px] lab-readout font-bold uppercase">
+                    <li><a class="hover:text-alert transition-colors" href="#">Shop All</a></li>
+                    <li><a class="hover:text-alert transition-colors" href="#">New Releases</a></li>
+                    <li><a class="hover:text-alert transition-colors" href="#">Tech Guide</a></li>
+                    <li><a class="hover:text-alert transition-colors" href="#">Collections</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="text-[10px] lab-readout font-bold text-white mb-8 border-b border-white/10 pb-2">Community</h4>
+                <ul class="space-y-4 text-white/40 text-[10px] lab-readout font-bold uppercase">
+                    <li><a class="hover:text-alert transition-colors" href="#">Discord</a></li>
+                    <li><a class="hover:text-alert transition-colors" href="#">Events</a></li>
+                    <li><a class="hover:text-alert transition-colors" href="#">Newsletter</a></li>
+                    <li><a class="hover:text-alert transition-colors" href="#">Ambassadors</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="text-[10px] lab-readout font-bold text-white mb-8 border-b border-white/10 pb-2">Support</h4>
+                <ul class="space-y-4 text-white/40 text-[10px] lab-readout font-bold uppercase">
+                    <li><a class="hover:text-alert transition-colors" href="#">Order Status</a></li>
+                    <li><a class="hover:text-alert transition-colors" href="#">Sizing Guide</a></li>
+                    <li><a class="hover:text-alert transition-colors" href="#">Returns</a></li>
+                    <li><a class="hover:text-alert transition-colors" href="#">Contact Us</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="flex flex-col md:flex-row justify-between items-center gap-8 border-t border-white/5 pt-12 text-[8px] lab-readout text-white/20">
+            <p>(C) 2024 FUTURBOL APPAREL. ALL RIGHTS RESERVED. [DEPLOY_V1.4.2]</p>
+            <div class="flex gap-8">
+                <a class="hover:text-alert transition-colors" href="#">Instagram</a>
+                <a class="hover:text-alert transition-colors" href="#">Twitter</a>
+                <a class="hover:text-alert transition-colors" href="#">TikTok</a>
+            </div>
+        </div>
+    </footer>
+</div>
+

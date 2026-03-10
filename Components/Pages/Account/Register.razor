@@ -1,0 +1,246 @@
+@page "/account/register"
+@rendermode InteractiveServer
+@attribute [AllowAnonymous]
+@inject UserManager<ApplicationUser> UserManager
+@inject NavigationManager Navigation
+
+<PageTitle>Register | Futurbol</PageTitle>
+
+<style type="text/tailwindcss">
+    .futurbol-auth {
+        background-color: #000000;
+        color: #ffffff;
+        font-family: 'Space Grotesk', sans-serif;
+        background-image:
+            linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+        background-size: 50px 50px;
+    }
+
+    .auth-card {
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        position: relative;
+    }
+
+    .auth-card::before {
+        content: '';
+        position: absolute;
+        top: -2px;
+        left: -2px;
+        width: 14px;
+        height: 14px;
+        border-top: 2px solid #0df20d;
+        border-left: 2px solid #0df20d;
+    }
+
+    .auth-card::after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        right: -2px;
+        width: 14px;
+        height: 14px;
+        border-bottom: 2px solid #0df20d;
+        border-right: 2px solid #0df20d;
+    }
+
+    .lab-readout {
+        font-family: 'Space Grotesk', monospace;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+    }
+
+    .auth-input {
+        background-color: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        color: #ffffff;
+        font-family: 'Space Grotesk', sans-serif;
+        padding: 0.85rem 1rem;
+        width: 100%;
+        outline: none;
+        transition: all 0.3s ease;
+    }
+
+    .auth-input:focus {
+        border-color: #0df20d;
+        box-shadow: 0 0 0 1px rgba(13, 242, 13, 0.3);
+        background-color: rgba(13, 242, 13, 0.03);
+    }
+
+    .auth-input::placeholder {
+        color: rgba(255, 255, 255, 0.25);
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .auth-input.valid.modified {
+        border-color: #0df20d;
+        outline: none;
+    }
+
+    .auth-input.invalid {
+        border-color: #ef4444;
+        outline: none;
+    }
+</style>
+
+<div class="futurbol-auth min-h-screen flex items-center justify-center px-4 py-16 overflow-hidden relative">
+    @* Decorative crosshair lines *@
+    <div class="absolute inset-0 pointer-events-none flex items-center justify-center">
+        <div class="w-full h-px bg-white/5 absolute"></div>
+        <div class="h-full w-px bg-white/5 absolute"></div>
+        <div class="w-32 h-32 border border-alert/10 rounded-full absolute"></div>
+    </div>
+
+    <div class="w-full max-w-md relative z-10">
+        @* Top status bar *@
+        <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center gap-3">
+                <div class="w-2 h-2 bg-alert rounded-full animate-pulse"></div>
+                <span class="text-[10px] lab-readout font-bold text-alert">System: Registration</span>
+            </div>
+            <span class="text-[10px] lab-readout text-white/30">Protocol_V2.1</span>
+        </div>
+
+        @* Main card *@
+        <div class="auth-card bg-black/60 backdrop-blur-sm p-8 md:p-10">
+            <div class="mb-8">
+                <h1 class="text-3xl font-bold uppercase tracking-tighter mb-2">Create Account</h1>
+                <p class="text-white/40 text-xs lab-readout">Initialize your Futurbol identity</p>
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(_successMessage))
+            {
+                <div class="border border-alert/40 bg-alert/5 px-4 py-3 mb-6 flex items-center gap-3">
+                    <div class="w-1.5 h-1.5 bg-alert rounded-full animate-pulse"></div>
+                    <span class="text-alert text-xs lab-readout">@_successMessage</span>
+                </div>
+            }
+
+            @if (_errors.Count > 0)
+            {
+                <div class="border border-red-500/40 bg-red-500/5 px-4 py-3 mb-6">
+                    <div class="flex items-center gap-3 mb-2">
+                        <div class="w-1.5 h-1.5 bg-red-500 rounded-full"></div>
+                        <span class="text-red-400 text-[10px] lab-readout font-bold">Registration Failed</span>
+                    </div>
+                    <ul class="space-y-1 pl-5">
+                        @foreach (var error in _errors)
+                        {
+                            <li class="text-red-400/80 text-xs lab-readout list-disc">@error</li>
+                        }
+                    </ul>
+                </div>
+            }
+
+            <EditForm Model="_model" OnValidSubmit="HandleRegisterAsync">
+                <DataAnnotationsValidator />
+                <ValidationSummary class="text-red-400 text-xs lab-readout mb-4 space-y-1" />
+
+                <div class="mb-5">
+                    <label class="block text-[10px] lab-readout font-bold text-white/60 mb-2" for="fullName">Full Name</label>
+                    <InputText id="fullName" class="auth-input" @bind-Value="_model.FullName" placeholder="Enter your full name" />
+                </div>
+
+                <div class="mb-5">
+                    <label class="block text-[10px] lab-readout font-bold text-white/60 mb-2" for="email">Email Address</label>
+                    <InputText id="email" class="auth-input" @bind-Value="_model.Email" placeholder="Enter your email" />
+                </div>
+
+                <div class="mb-5">
+                    <label class="block text-[10px] lab-readout font-bold text-white/60 mb-2" for="password">Password</label>
+                    <InputText id="password" type="password" class="auth-input" @bind-Value="_model.Password" placeholder="Min. 8 characters" />
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-[10px] lab-readout font-bold text-white/60 mb-2" for="confirmPassword">Confirm Password</label>
+                    <InputText id="confirmPassword" type="password" class="auth-input" @bind-Value="_model.ConfirmPassword" placeholder="Re-enter your password" />
+                </div>
+
+                <button type="submit"
+                        class="w-full bg-white text-black px-8 py-4 text-xs lab-readout font-bold hover:bg-alert transition-colors flex items-center justify-center gap-3 disabled:opacity-40 disabled:cursor-not-allowed"
+                        disabled="@_isSubmitting">
+                    <span>@(_isSubmitting ? "Processing..." : "Create Account")</span>
+                    <span class="material-symbols-outlined text-base">person_add</span>
+                </button>
+            </EditForm>
+
+            <div class="mt-6 pt-6 border-t border-white/10 flex items-center justify-between">
+                <span class="text-white/30 text-xs lab-readout">Already have an account?</span>
+                <a href="/account/login"
+                   class="text-alert text-xs lab-readout font-bold hover:underline transition-colors flex items-center gap-2">
+                    Sign In
+                    <span class="material-symbols-outlined text-sm">arrow_forward</span>
+                </a>
+            </div>
+        </div>
+
+        @* Bottom data readout *@
+        <div class="flex items-center justify-between mt-6">
+            <div class="flex items-center gap-2">
+                <div class="w-6 h-px bg-alert/50"></div>
+                <span class="text-[8px] lab-readout text-white/20">Encrypted Connection</span>
+            </div>
+            <a href="/"
+               class="text-[10px] lab-readout text-white/40 hover:text-alert transition-colors flex items-center gap-2">
+                <span class="material-symbols-outlined text-xs">home</span>
+                Return Home
+            </a>
+        </div>
+    </div>
+</div>
+
+@code {
+    private readonly RegisterInputModel _model = new();
+    private readonly List<string> _errors = [];
+    private string? _successMessage;
+    private bool _isSubmitting;
+
+    private async Task HandleRegisterAsync()
+    {
+        _isSubmitting = true;
+        _errors.Clear();
+        _successMessage = null;
+
+        var user = new ApplicationUser
+        {
+            UserName = _model.Email,
+            Email = _model.Email,
+            FullName = _model.FullName,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        var result = await UserManager.CreateAsync(user, _model.Password);
+        if (!result.Succeeded)
+        {
+            _isSubmitting = false;
+            _errors.AddRange(result.Errors.Select(e => e.Description));
+            return;
+        }
+
+        await UserManager.AddToRoleAsync(user, Roles.Customer);
+
+        _successMessage = "Account created successfully. Redirecting to login...";
+        Navigation.NavigateTo("/account/login", true);
+    }
+
+    private sealed class RegisterInputModel
+    {
+        [Required]
+        [StringLength(100, MinimumLength = 2)]
+        public string FullName { get; set; } = string.Empty;
+
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; } = string.Empty;
+
+        [Required]
+        [StringLength(100, MinimumLength = 8)]
+        public string Password { get; set; } = string.Empty;
+
+        [Required]
+        [Compare(nameof(Password))]
+        public string ConfirmPassword { get; set; } = string.Empty;
+    }
+}

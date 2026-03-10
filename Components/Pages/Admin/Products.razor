@@ -1,0 +1,263 @@
+@page "/admin/products"
+@attribute [Authorize(Roles = EcommerceStore.Constants.Roles.Admin)]
+@using EcommerceStore.Services.Interfaces
+@using EcommerceStore.Models.Entities
+@inject IProductService ProductService
+@inject ICategoryService CategoryService
+@inject NavigationManager Nav
+@rendermode InteractiveServer
+
+<PageTitle>Products | Admin | Futurbol</PageTitle>
+
+<style type="text/tailwindcss">
+    .futurbol-admin {
+        background-color: #000000;
+        color: #ffffff;
+        font-family: 'Space Grotesk', sans-serif;
+        background-image:
+            linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+        background-size: 50px 50px;
+    }
+
+    .lab-readout {
+        font-family: 'Space Grotesk', monospace;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+    }
+
+    .data-grid-border {
+        border: 1px solid rgba(255,255,255,0.1);
+        position: relative;
+    }
+
+    .data-grid-border::before {
+        content: '';
+        position: absolute;
+        top: -2px; left: -2px;
+        width: 14px; height: 14px;
+        border-top: 2px solid #0df20d;
+        border-left: 2px solid #0df20d;
+    }
+
+    .data-grid-border::after {
+        content: '';
+        position: absolute;
+        bottom: -2px; right: -2px;
+        width: 14px; height: 14px;
+        border-bottom: 2px solid #0df20d;
+        border-right: 2px solid #0df20d;
+    }
+
+    .futurbol-input {
+        background: transparent;
+        border: 1px solid rgba(255,255,255,0.15);
+        color: #fff;
+        outline: none;
+    }
+
+    .futurbol-input:focus { border-color: rgba(13,242,13,0.5); }
+
+    .futurbol-select {
+        background: #000;
+        border: 1px solid rgba(255,255,255,0.15);
+        color: #fff;
+        outline: none;
+    }
+
+    .futurbol-select:focus { border-color: rgba(13,242,13,0.5); }
+
+    .table-row:hover { background: rgba(255,255,255,0.02); }
+</style>
+
+<div class="futurbol-admin min-h-screen px-6 lg:px-20 py-16">
+    @* Header *@
+    <div class="flex flex-col md:flex-row items-start md:items-center justify-between mb-12 gap-6">
+        <div>
+            <div class="flex items-center gap-3 mb-3">
+                <div class="w-2 h-2 bg-alert rounded-full animate-pulse"></div>
+                <span class="text-[10px] lab-readout font-bold text-alert">Admin // Product Registry</span>
+            </div>
+            <h1 class="text-4xl md:text-5xl font-bold uppercase tracking-tighter">Products</h1>
+        </div>
+        <div class="flex items-center gap-3">
+            <a href="/admin" class="border border-white/30 px-4 py-2 text-[10px] lab-readout hover:bg-white hover:text-black transition-all no-underline text-white">Dashboard</a>
+            <a href="/admin/categories" class="border border-white/30 px-4 py-2 text-[10px] lab-readout hover:bg-white hover:text-black transition-all no-underline text-white">Categories</a>
+            <a href="/admin/products/add" class="border border-alert/40 px-4 py-2 text-[10px] lab-readout text-alert hover:bg-alert hover:text-black transition-all no-underline">+ Add Product</a>
+        </div>
+    </div>
+
+    @* Filters *@
+    <div class="flex flex-col md:flex-row gap-4 mb-8 border border-white/10 p-4 bg-black/60">
+        <input class="futurbol-input flex-1 px-4 py-3 text-sm lab-readout placeholder:text-white/30"
+               type="text" placeholder="Search products..."
+               value="@_search"
+               @oninput="OnSearchInput" />
+        <select class="futurbol-select px-4 py-3 text-sm lab-readout" @onchange="OnCategoryChange">
+            <option value="">All Categories</option>
+            @foreach (var cat in _categories)
+            {
+                <option value="@cat.Id" selected="@(_selectedCategory == cat.Id)">@cat.Name</option>
+            }
+        </select>
+    </div>
+
+    @* Success/Error alert *@
+    @if (!string.IsNullOrEmpty(_message))
+    {
+        <div class="border border-@(_isError ? "red-500/40" : "alert/40") px-6 py-4 mb-6 text-[10px] lab-readout @(_isError ? "text-red-400" : "text-alert") flex items-center gap-3">
+            <span class="material-symbols-outlined text-sm">@(_isError ? "error" : "check_circle")</span>
+            @_message
+        </div>
+    }
+
+    @* Products table *@
+    @if (_loading)
+    {
+        <div class="flex items-center gap-3 text-white/40 text-sm lab-readout">
+            <div class="w-2 h-2 bg-alert rounded-full animate-pulse"></div>Loading registry...
+        </div>
+    }
+    else if (!_products.Any())
+    {
+        <div class="border border-white/10 p-12 text-center">
+            <div class="text-white/30 text-sm lab-readout">No products found.</div>
+        </div>
+    }
+    else
+    {
+        <div class="data-grid-border bg-black/60 overflow-x-auto">
+            <table class="w-full">
+                <thead>
+                    <tr class="border-b border-white/10">
+                        <th class="text-left px-6 py-4 text-[10px] lab-readout text-white/40 font-normal">ID</th>
+                        <th class="text-left px-6 py-4 text-[10px] lab-readout text-white/40 font-normal">Product</th>
+                        <th class="text-left px-6 py-4 text-[10px] lab-readout text-white/40 font-normal">Category</th>
+                        <th class="text-left px-6 py-4 text-[10px] lab-readout text-white/40 font-normal">Price</th>
+                        <th class="text-left px-6 py-4 text-[10px] lab-readout text-white/40 font-normal">Stock</th>
+                        <th class="text-left px-6 py-4 text-[10px] lab-readout text-white/40 font-normal">Status</th>
+                        <th class="text-right px-6 py-4 text-[10px] lab-readout text-white/40 font-normal">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var product in _products)
+                    {
+                        <tr class="table-row border-b border-white/5 transition-colors">
+                            <td class="px-6 py-4 text-[10px] lab-readout text-white/40">#@product.Id.ToString("D4")</td>
+                            <td class="px-6 py-4">
+                                <div class="font-bold text-sm uppercase">@product.Name</div>
+                                @if (!string.IsNullOrWhiteSpace(product.Description))
+                                {
+                                    <div class="text-[10px] text-white/40 mt-1 truncate max-w-[200px]">@product.Description</div>
+                                }
+                            </td>
+                            <td class="px-6 py-4 text-[10px] lab-readout text-white/60">@product.Category?.Name</td>
+                            <td class="px-6 py-4 font-bold">$@product.Price.ToString("F2")</td>
+                            <td class="px-6 py-4 text-[10px] lab-readout @(product.Stock <= 5 ? "text-red-400" : "text-white/60")">
+                                @product.Stock @(product.Stock <= 5 ? "⚠" : "")
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="text-[8px] lab-readout px-2 py-1 border @(product.IsActive ? "border-alert/40 text-alert" : "border-white/20 text-white/40")">
+                                    @(product.IsActive ? "Active" : "Inactive")
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                <div class="flex items-center justify-end gap-2">
+                                    <a href="/catalog/@product.Id"
+                                       target="_blank"
+                                       class="border border-white/20 px-3 py-2 text-[10px] lab-readout hover:bg-white/10 transition-all no-underline text-white/60 hover:text-white">
+                                        View
+                                    </a>
+                                    <a href="/admin/products/edit/@product.Id"
+                                       class="border border-white/30 px-3 py-2 text-[10px] lab-readout hover:bg-white hover:text-black transition-all no-underline text-white">
+                                        Edit
+                                    </a>
+                                    <button @onclick="() => ConfirmDelete(product)"
+                                            class="border border-red-500/30 px-3 py-2 text-[10px] lab-readout text-red-400 hover:bg-red-500 hover:text-white transition-all">
+                                        Delete
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <div class="mt-4 text-[10px] lab-readout text-white/30">@_products.Count product(s) in registry</div>
+    }
+
+    @* Delete confirmation modal *@
+    @if (_deleteTarget is not null)
+    {
+        <div class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center px-6">
+            <div class="data-grid-border bg-black p-8 max-w-md w-full">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="material-symbols-outlined text-red-400">warning</span>
+                    <span class="text-xs lab-readout font-bold">Confirm Delete</span>
+                </div>
+                <p class="text-white/60 text-sm mb-8">
+                    Delete <span class="text-white font-bold">"@_deleteTarget.Name"</span>? This action cannot be undone.
+                </p>
+                <div class="flex gap-4">
+                    <button @onclick="ExecuteDelete"
+                            class="flex-1 bg-red-500 text-white px-6 py-3 text-[10px] lab-readout font-bold hover:bg-red-600 transition-colors">
+                        Confirm Delete
+                    </button>
+                    <button @onclick="CancelDelete"
+                            class="flex-1 border border-white/30 px-6 py-3 text-[10px] lab-readout hover:bg-white hover:text-black transition-all">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private List<Product>  _products        = [];
+    private List<Category> _categories      = [];
+    private Product?       _deleteTarget    = null;
+    private string         _search          = string.Empty;
+    private int?           _selectedCategory = null;
+    private bool           _loading         = true;
+    private string         _message         = string.Empty;
+    private bool           _isError         = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _categories = await CategoryService.GetCategoriesAsync();
+        await LoadProductsAsync();
+    }
+
+    private async Task LoadProductsAsync()
+    {
+        _loading  = true;
+        _products = await ProductService.GetProductsAsync(_search, _selectedCategory, includeInactive: true);
+        _loading  = false;
+    }
+
+    private async Task OnSearchInput(ChangeEventArgs e)
+    {
+        _search = e.Value?.ToString() ?? string.Empty;
+        await LoadProductsAsync();
+    }
+
+    private async Task OnCategoryChange(ChangeEventArgs e)
+    {
+        _selectedCategory = int.TryParse(e.Value?.ToString(), out var id) ? id : null;
+        await LoadProductsAsync();
+    }
+
+    private void ConfirmDelete(Product product) => _deleteTarget = product;
+    private void CancelDelete()                 => _deleteTarget = null;
+
+    private async Task ExecuteDelete()
+    {
+        if (_deleteTarget is null) return;
+        var success = await ProductService.DeleteProductAsync(_deleteTarget.Id);
+        _message     = success ? $"Product \"{_deleteTarget.Name}\" deleted." : "Failed to delete product.";
+        _isError     = !success;
+        _deleteTarget = null;
+        await LoadProductsAsync();
+    }
+}

@@ -1,0 +1,226 @@
+@page "/catalog"
+@using EcommerceStore.Services.Interfaces
+@using EcommerceStore.Models.Entities
+@inject IProductService ProductService
+@inject ICategoryService CategoryService
+@inject NavigationManager Nav
+@rendermode InteractiveServer
+
+<PageTitle>Catalog | Futurbol</PageTitle>
+
+<style type="text/tailwindcss">
+    :root { --alert-color: #0df20d; }
+
+    .futurbol-page {
+        background-color: #000000;
+        color: #ffffff;
+        font-family: 'Space Grotesk', sans-serif;
+        background-image:
+            linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+        background-size: 50px 50px;
+    }
+
+    .lab-readout {
+        font-family: 'Space Grotesk', monospace;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+    }
+
+    .data-grid-border {
+        border: 1px solid rgba(255,255,255,0.1);
+        position: relative;
+    }
+
+    .data-grid-border::before {
+        content: '';
+        position: absolute;
+        top: -2px; left: -2px;
+        width: 10px; height: 10px;
+        border-top: 2px solid var(--alert-color);
+        border-left: 2px solid var(--alert-color);
+    }
+
+    .product-card:hover .product-img { filter: grayscale(0); }
+
+    .futurbol-input {
+        background: transparent;
+        border: 1px solid rgba(255,255,255,0.15);
+        color: #fff;
+        outline: none;
+    }
+
+    .futurbol-input:focus { border-color: rgba(13,242,13,0.5); }
+
+    .futurbol-select {
+        background: #000;
+        border: 1px solid rgba(255,255,255,0.15);
+        color: #fff;
+        outline: none;
+    }
+
+    .futurbol-select:focus { border-color: rgba(13,242,13,0.5); }
+</style>
+
+<div class="futurbol-page min-h-screen overflow-x-hidden">
+    @* Navbar *@
+    <nav class="fixed top-0 left-0 w-full z-50 border-b border-white/20 bg-black/80 backdrop-blur-md">
+        <div class="flex items-center justify-between px-6 py-4">
+            <div class="flex flex-col">
+                <span class="text-xs text-alert lab-readout font-bold leading-none">Status: Active</span>
+                <a href="/" class="text-2xl font-bold tracking-tighter uppercase no-underline text-white">Futurbol//Lab</a>
+            </div>
+            <div class="flex items-center gap-3">
+                <a href="/catalog" class="text-[10px] lab-readout text-alert border-b border-alert pb-0.5">Catalog</a>
+                <AuthorizeView>
+                    <Authorized Context="authState">
+                        <a class="border border-white/30 px-4 py-2 text-[10px] lab-readout hover:bg-white hover:text-black transition-all no-underline text-white" href="/account/logout">Logout</a>
+                        <AuthorizeView Roles="@EcommerceStore.Constants.Roles.Admin" Context="adminCtx">
+                            <a class="border border-alert/40 px-4 py-2 text-[10px] lab-readout text-alert hover:bg-alert hover:text-black transition-all no-underline" href="/admin">Admin</a>
+                        </AuthorizeView>
+                    </Authorized>
+                    <NotAuthorized>
+                        <a class="border border-white/30 px-4 py-2 text-[10px] lab-readout hover:bg-white hover:text-black transition-all no-underline text-white" href="/account/login">Login</a>
+                    </NotAuthorized>
+                </AuthorizeView>
+                <button class="border border-white/30 px-4 py-2 text-[10px] lab-readout hover:bg-white hover:text-black transition-all">Cart (0)</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="pt-28 pb-20 px-6 lg:px-20">
+        @* Header *@
+        <div class="mb-12">
+            <div class="flex items-center gap-3 mb-3">
+                <div class="w-2 h-2 bg-alert rounded-full animate-pulse"></div>
+                <span class="text-[10px] lab-readout font-bold text-alert">Product Registry</span>
+            </div>
+            <h1 class="text-5xl md:text-6xl font-bold uppercase tracking-tighter">The Collection</h1>
+        </div>
+
+        @* Filters bar *@
+        <div class="flex flex-col md:flex-row gap-4 mb-10 border border-white/10 p-4 bg-black/60">
+            <input class="futurbol-input flex-1 px-4 py-3 text-sm lab-readout placeholder:text-white/30"
+                   type="text" placeholder="Search jerseys..."
+                   value="@_search"
+                   @oninput="OnSearchInput" />
+            <select class="futurbol-select px-4 py-3 text-sm lab-readout" @onchange="OnCategoryChange">
+                <option value="">All Categories</option>
+                @foreach (var cat in _categories)
+                {
+                    <option value="@cat.Id" selected="@(_selectedCategory == cat.Id)">@cat.Name</option>
+                }
+            </select>
+            <select class="futurbol-select px-4 py-3 text-sm lab-readout" @onchange="OnSortChange">
+                <option value="name_asc"  selected="@(_sort == "name_asc")">Name A–Z</option>
+                <option value="name_desc" selected="@(_sort == "name_desc")">Name Z–A</option>
+                <option value="price_asc" selected="@(_sort == "price_asc")">Price Low–High</option>
+                <option value="price_desc" selected="@(_sort == "price_desc")">Price High–Low</option>
+            </select>
+        </div>
+
+        @* Product grid *@
+        @if (_loading)
+        {
+            <div class="flex items-center gap-3 text-white/40 text-sm lab-readout">
+                <div class="w-2 h-2 bg-alert rounded-full animate-pulse"></div>Loading units...
+            </div>
+        }
+        else if (!_products.Any())
+        {
+            <div class="border border-white/10 p-12 text-center">
+                <div class="text-white/30 text-sm lab-readout">No products found matching your criteria.</div>
+            </div>
+        }
+        else
+        {
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-white/10 border border-white/10">
+                @foreach (var (product, i) in _products.Select((p, i) => (p, i)))
+                {
+                    <div class="product-card group relative bg-black p-8 hover:bg-white/[0.02] transition-colors">
+                        <div class="flex justify-between items-start mb-8">
+                            <div>
+                                <span class="text-alert text-[10px] lab-readout font-bold">@product.Category?.Name</span>
+                                <h3 class="text-xl font-bold mt-1 uppercase">@product.Name</h3>
+                            </div>
+                            <span class="text-white/20 lab-readout text-lg">@((i + 1).ToString("D2"))</span>
+                        </div>
+                        <div class="relative aspect-square mb-8 flex items-center justify-center border border-white/5 group-hover:border-alert/20 transition-colors overflow-hidden bg-white/[0.02]">
+                            @if (!string.IsNullOrWhiteSpace(product.ImageUrl))
+                            {
+                                <img alt="@product.Name"
+                                     class="product-img w-full h-full object-contain grayscale transition-all duration-500"
+                                     src="@product.ImageUrl" />
+                            }
+                            else
+                            {
+                                <span class="material-symbols-outlined text-white/10 text-7xl">checkroom</span>
+                            }
+                        </div>
+                        <div class="flex justify-between items-end">
+                            <div class="lab-readout">
+                                <div class="text-[10px] text-white/40">Unit Price</div>
+                                <span class="text-2xl font-bold">$@product.Price.ToString("F2")</span>
+                                <div class="text-[8px] text-white/30 mt-1">Stock: @product.Stock units</div>
+                            </div>
+                            <a href="/catalog/@product.Id"
+                               class="w-12 h-12 flex items-center justify-center border border-white/30 hover:bg-alert hover:text-black hover:border-alert transition-all no-underline text-white">
+                                <span class="material-symbols-outlined text-sm">arrow_forward</span>
+                            </a>
+                        </div>
+                    </div>
+                }
+            </div>
+            <div class="mt-6 text-[10px] lab-readout text-white/30">
+                @_products.Count unit(s) in registry
+            </div>
+        }
+    </main>
+
+    <footer class="bg-black py-12 px-6 lg:px-20 border-t border-white/10">
+        <div class="flex flex-col md:flex-row justify-between items-center gap-4 text-[8px] lab-readout text-white/20">
+            <p>(C) 2024 FUTURBOL APPAREL. ALL RIGHTS RESERVED.</p>
+            <a href="/" class="hover:text-alert transition-colors no-underline text-white/20">Back to Home</a>
+        </div>
+    </footer>
+</div>
+
+@code {
+    private List<Product>  _products   = [];
+    private List<Category> _categories = [];
+    private string  _search           = string.Empty;
+    private int?    _selectedCategory = null;
+    private string  _sort             = "name_asc";
+    private bool    _loading          = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _categories = await CategoryService.GetCategoriesAsync();
+        await LoadProductsAsync();
+    }
+
+    private async Task LoadProductsAsync()
+    {
+        _loading  = true;
+        _products = await ProductService.GetProductsAsync(_search, _selectedCategory, _sort);
+        _loading  = false;
+    }
+
+    private async Task OnSearchInput(ChangeEventArgs e)
+    {
+        _search = e.Value?.ToString() ?? string.Empty;
+        await LoadProductsAsync();
+    }
+
+    private async Task OnCategoryChange(ChangeEventArgs e)
+    {
+        _selectedCategory = int.TryParse(e.Value?.ToString(), out var id) ? id : null;
+        await LoadProductsAsync();
+    }
+
+    private async Task OnSortChange(ChangeEventArgs e)
+    {
+        _sort = e.Value?.ToString() ?? "name_asc";
+        await LoadProductsAsync();
+    }
+}

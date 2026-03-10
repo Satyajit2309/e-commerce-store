@@ -1,0 +1,193 @@
+@page "/account/login"
+@attribute [AllowAnonymous]
+
+<PageTitle>Login | Futurbol</PageTitle>
+
+<style type="text/tailwindcss">
+    .futurbol-auth {
+        background-color: #000000;
+        color: #ffffff;
+        font-family: 'Space Grotesk', sans-serif;
+        background-image:
+            linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+        background-size: 50px 50px;
+    }
+
+    .auth-card {
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        position: relative;
+    }
+
+    .auth-card::before {
+        content: '';
+        position: absolute;
+        top: -2px;
+        left: -2px;
+        width: 14px;
+        height: 14px;
+        border-top: 2px solid #0df20d;
+        border-left: 2px solid #0df20d;
+    }
+
+    .auth-card::after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        right: -2px;
+        width: 14px;
+        height: 14px;
+        border-bottom: 2px solid #0df20d;
+        border-right: 2px solid #0df20d;
+    }
+
+    .lab-readout {
+        font-family: 'Space Grotesk', monospace;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+    }
+
+    .auth-input {
+        background-color: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        color: #ffffff;
+        font-family: 'Space Grotesk', sans-serif;
+        padding: 0.85rem 1rem;
+        width: 100%;
+        outline: none;
+        transition: all 0.3s ease;
+    }
+
+    .auth-input:focus {
+        border-color: #0df20d;
+        box-shadow: 0 0 0 1px rgba(13, 242, 13, 0.3);
+        background-color: rgba(13, 242, 13, 0.03);
+    }
+
+    .auth-input::placeholder {
+        color: rgba(255, 255, 255, 0.25);
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .auth-checkbox {
+        appearance: none;
+        width: 16px;
+        height: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        background: transparent;
+        cursor: pointer;
+        position: relative;
+        vertical-align: middle;
+    }
+
+    .auth-checkbox:checked {
+        border-color: #0df20d;
+        background-color: #0df20d;
+    }
+
+    .auth-checkbox:checked::after {
+        content: '✓';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: #000;
+        font-size: 11px;
+        font-weight: bold;
+    }
+</style>
+
+<div class="futurbol-auth min-h-screen flex items-center justify-center px-4 py-16 overflow-hidden relative">
+    @* Decorative crosshair lines *@
+    <div class="absolute inset-0 pointer-events-none flex items-center justify-center">
+        <div class="w-full h-px bg-white/5 absolute"></div>
+        <div class="h-full w-px bg-white/5 absolute"></div>
+        <div class="w-32 h-32 border border-alert/10 rounded-full absolute"></div>
+    </div>
+
+    <div class="w-full max-w-md relative z-10">
+        @* Top status bar *@
+        <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center gap-3">
+                <div class="w-2 h-2 bg-alert rounded-full animate-pulse"></div>
+                <span class="text-[10px] lab-readout font-bold text-alert">System: Authentication</span>
+            </div>
+            <span class="text-[10px] lab-readout text-white/30">Protocol_V2.1</span>
+        </div>
+
+        @* Main card *@
+        <div class="auth-card bg-black/60 backdrop-blur-sm p-8 md:p-10">
+            <div class="mb-8">
+                <h1 class="text-3xl font-bold uppercase tracking-tighter mb-2">Sign In</h1>
+                <p class="text-white/40 text-xs lab-readout">Access your Futurbol account</p>
+            </div>
+
+            @if (ShowError)
+            {
+                <div class="border border-red-500/40 bg-red-500/5 px-4 py-3 mb-6 flex items-center gap-3">
+                    <div class="w-1.5 h-1.5 bg-red-500 rounded-full"></div>
+                    <span class="text-red-400 text-xs lab-readout">Invalid login attempt. Check your credentials.</span>
+                </div>
+            }
+
+            <form method="post" action="/account/login-handler">
+                <div class="mb-5">
+                    <label class="block text-[10px] lab-readout font-bold text-white/60 mb-2" for="email">Email Address</label>
+                    <input id="email" name="email" type="email" class="auth-input" placeholder="Enter your email" required autocomplete="email" />
+                </div>
+
+                <div class="mb-5">
+                    <label class="block text-[10px] lab-readout font-bold text-white/60 mb-2" for="password">Password</label>
+                    <input id="password" name="password" type="password" class="auth-input" placeholder="Enter your password" required autocomplete="current-password" />
+                </div>
+
+                <div class="flex items-center gap-3 mb-6">
+                    <input id="rememberMe" name="rememberMe" type="checkbox" class="auth-checkbox" value="true" />
+                    <label class="text-xs lab-readout text-white/50 cursor-pointer" for="rememberMe">Remember me</label>
+                </div>
+
+                <input type="hidden" name="returnUrl" value="@ReturnUrl" />
+
+                <button type="submit"
+                        class="w-full bg-white text-black px-8 py-4 text-xs lab-readout font-bold hover:bg-alert transition-colors flex items-center justify-center gap-3">
+                    <span>Sign In</span>
+                    <span class="material-symbols-outlined text-base">login</span>
+                </button>
+            </form>
+
+            <div class="mt-6 pt-6 border-t border-white/10 flex items-center justify-between">
+                <span class="text-white/30 text-xs lab-readout">New here?</span>
+                <a href="/account/register"
+                   class="text-alert text-xs lab-readout font-bold hover:underline transition-colors flex items-center gap-2">
+                    Create an account
+                    <span class="material-symbols-outlined text-sm">arrow_forward</span>
+                </a>
+            </div>
+        </div>
+
+        @* Bottom data readout *@
+        <div class="flex items-center justify-between mt-6">
+            <div class="flex items-center gap-2">
+                <div class="w-6 h-px bg-alert/50"></div>
+                <span class="text-[8px] lab-readout text-white/20">Encrypted Connection</span>
+            </div>
+            <a href="/"
+               class="text-[10px] lab-readout text-white/40 hover:text-alert transition-colors flex items-center gap-2">
+                <span class="material-symbols-outlined text-xs">home</span>
+                Return Home
+            </a>
+        </div>
+    </div>
+</div>
+
+@code {
+    [SupplyParameterFromQuery(Name = "returnUrl")]
+    public string? ReturnUrl { get; set; }
+
+    [SupplyParameterFromQuery(Name = "error")]
+    public string? Error { get; set; }
+
+    private bool ShowError => Error == "1";
+}

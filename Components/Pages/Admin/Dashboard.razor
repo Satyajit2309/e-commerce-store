@@ -1,0 +1,126 @@
+@page "/admin"
+@attribute [Authorize(Roles = Roles.Admin)]
+
+<PageTitle>Admin Dashboard | Futurbol</PageTitle>
+
+<style type="text/tailwindcss">
+    .futurbol-admin {
+        background-color: #000000;
+        color: #ffffff;
+        font-family: 'Space Grotesk', sans-serif;
+        background-image:
+            linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+        background-size: 50px 50px;
+    }
+
+    .lab-readout {
+        font-family: 'Space Grotesk', monospace;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+    }
+
+    .data-grid-border {
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        position: relative;
+    }
+
+    .data-grid-border::before {
+        content: '';
+        position: absolute;
+        top: -2px;
+        left: -2px;
+        width: 14px;
+        height: 14px;
+        border-top: 2px solid #0df20d;
+        border-left: 2px solid #0df20d;
+    }
+
+    .data-grid-border::after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        right: -2px;
+        width: 14px;
+        height: 14px;
+        border-bottom: 2px solid #0df20d;
+        border-right: 2px solid #0df20d;
+    }
+
+    .stat-card {
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        transition: all 0.3s ease;
+    }
+
+    .stat-card:hover {
+        border-color: rgba(13, 242, 13, 0.3);
+        background-color: rgba(255, 255, 255, 0.02);
+    }
+</style>
+
+<div class="futurbol-admin min-h-screen px-6 lg:px-20 py-16">
+    @* Top header *@
+    <div class="flex flex-col md:flex-row items-start md:items-center justify-between mb-16 gap-6">
+        <div>
+            <div class="flex items-center gap-3 mb-3">
+                <div class="w-2 h-2 bg-alert rounded-full animate-pulse"></div>
+                <span class="text-[10px] lab-readout font-bold text-alert">Admin // Control Panel</span>
+            </div>
+            <h1 class="text-4xl md:text-5xl font-bold uppercase tracking-tighter">Dashboard</h1>
+        </div>
+        <div class="flex items-center gap-4">
+            <a href="/"
+               class="border border-white/30 px-4 py-2 text-[10px] lab-readout hover:bg-white hover:text-black transition-all no-underline text-white">
+                View Store
+            </a>
+            <a href="/account/logout"
+               class="border border-white/30 px-4 py-2 text-[10px] lab-readout hover:bg-white hover:text-black transition-all no-underline text-white">
+                Logout
+            </a>
+        </div>
+    </div>
+
+    @* Stats row *@
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px bg-white/10 border border-white/10 mb-16">
+        <div class="stat-card bg-black p-8">
+            <div class="text-[10px] lab-readout text-white/40 mb-2">Total Orders</div>
+            <div class="text-3xl font-bold">--</div>
+            <div class="text-[8px] lab-readout text-alert mt-2">Pending Setup</div>
+        </div>
+        <div class="stat-card bg-black p-8">
+            <div class="text-[10px] lab-readout text-white/40 mb-2">Products</div>
+            <div class="text-3xl font-bold">--</div>
+            <div class="text-[8px] lab-readout text-alert mt-2">Pending Setup</div>
+        </div>
+        <div class="stat-card bg-black p-8">
+            <div class="text-[10px] lab-readout text-white/40 mb-2">Revenue</div>
+            <div class="text-3xl font-bold">--</div>
+            <div class="text-[8px] lab-readout text-alert mt-2">Pending Setup</div>
+        </div>
+        <div class="stat-card bg-black p-8">
+            <div class="text-[10px] lab-readout text-white/40 mb-2">Customers</div>
+            <div class="text-3xl font-bold">--</div>
+            <div class="text-[8px] lab-readout text-alert mt-2">Pending Setup</div>
+        </div>
+    </div>
+
+    @* Quick links *@
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-2xl">
+        <a href="/admin/products"
+           class="data-grid-border bg-black/60 p-8 group hover:bg-white/[0.02] transition-colors no-underline text-white block">
+            <div class="flex items-center gap-3 mb-4">
+                <span class="material-symbols-outlined text-alert">inventory_2</span>
+                <span class="text-xs lab-readout font-bold group-hover:text-alert transition-colors">Products</span>
+            </div>
+            <p class="text-white/40 text-xs lab-readout">Manage product catalog, pricing, and stock.</p>
+        </a>
+        <a href="/admin/categories"
+           class="data-grid-border bg-black/60 p-8 group hover:bg-white/[0.02] transition-colors no-underline text-white block">
+            <div class="flex items-center gap-3 mb-4">
+                <span class="material-symbols-outlined text-alert">category</span>
+                <span class="text-xs lab-readout font-bold group-hover:text-alert transition-colors">Categories</span>
+            </div>
+            <p class="text-white/40 text-xs lab-readout">Create and manage product categories.</p>
+        </a>
+    </div>
+</div>

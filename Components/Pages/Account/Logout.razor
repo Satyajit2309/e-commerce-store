@@ -1,0 +1,91 @@
+@page "/account/logout"
+@attribute [Authorize]
+
+<PageTitle>Logout | Futurbol</PageTitle>
+
+<style type="text/tailwindcss">
+    .futurbol-auth {
+        background-color: #000000;
+        color: #ffffff;
+        font-family: 'Space Grotesk', sans-serif;
+        background-image:
+            linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+        background-size: 50px 50px;
+    }
+
+    .auth-card {
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        position: relative;
+    }
+
+    .auth-card::before {
+        content: '';
+        position: absolute;
+        top: -2px;
+        left: -2px;
+        width: 14px;
+        height: 14px;
+        border-top: 2px solid #0df20d;
+        border-left: 2px solid #0df20d;
+    }
+
+    .auth-card::after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        right: -2px;
+        width: 14px;
+        height: 14px;
+        border-bottom: 2px solid #0df20d;
+        border-right: 2px solid #0df20d;
+    }
+
+    .lab-readout {
+        font-family: 'Space Grotesk', monospace;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+    }
+</style>
+
+<div class="futurbol-auth min-h-screen flex items-center justify-center px-4 py-16 overflow-hidden relative">
+    <div class="absolute inset-0 pointer-events-none flex items-center justify-center">
+        <div class="w-full h-px bg-white/5 absolute"></div>
+        <div class="h-full w-px bg-white/5 absolute"></div>
+    </div>
+
+    <div class="w-full max-w-md relative z-10">
+        <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center gap-3">
+                <div class="w-2 h-2 bg-alert rounded-full animate-pulse"></div>
+                <span class="text-[10px] lab-readout font-bold text-alert">System: Deauthentication</span>
+            </div>
+            <span class="text-[10px] lab-readout text-white/30">Protocol_V2.1</span>
+        </div>
+
+        <div class="auth-card bg-black/60 backdrop-blur-sm p-8 md:p-10 text-center">
+            <div class="mb-8">
+                <span class="material-symbols-outlined text-white/60 text-5xl mb-4 block">logout</span>
+                <h1 class="text-3xl font-bold uppercase tracking-tighter mb-2">Sign Out</h1>
+                <p class="text-white/40 text-xs lab-readout">Terminate your current session</p>
+            </div>
+
+            <form method="post" action="/account/logout-handler">
+                <input type="hidden" name="returnUrl" value="/" />
+                <button type="submit"
+                        class="w-full bg-white text-black px-8 py-4 text-xs lab-readout font-bold hover:bg-alert transition-colors flex items-center justify-center gap-3">
+                    <span>Confirm Sign Out</span>
+                    <span class="material-symbols-outlined text-base">logout</span>
+                </button>
+            </form>
+
+            <div class="mt-6 pt-6 border-t border-white/10">
+                <a href="/"
+                   class="text-white/40 text-xs lab-readout hover:text-alert transition-colors inline-flex items-center gap-2">
+                    <span class="material-symbols-outlined text-xs">arrow_back</span>
+                    Cancel and return home
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
