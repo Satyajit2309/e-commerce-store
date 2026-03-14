@@ -1,0 +1,180 @@
+@page "/admin/orders"
+@attribute [Authorize(Roles = EcommerceStore.Constants.Roles.Admin)]
+@using EcommerceStore.Services.Interfaces
+@using EcommerceStore.Models.Entities
+@using EcommerceStore.Constants
+@inject IOrderService OrderService
+@inject NavigationManager Nav
+@rendermode InteractiveServer
+
+<PageTitle>Orders | Admin | Futurbol</PageTitle>
+
+<style type="text/tailwindcss">
+    .futurbol-admin {
+        background-color: #000000;
+        color: #ffffff;
+        font-family: 'Space Grotesk', sans-serif;
+        background-image:
+            linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+        background-size: 50px 50px;
+    }
+
+    .lab-readout {
+        font-family: 'Space Grotesk', monospace;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+    }
+
+    .data-grid-border {
+        border: 1px solid rgba(255,255,255,0.1);
+        position: relative;
+    }
+
+    .data-grid-border::before {
+        content: '';
+        position: absolute;
+        top: -2px; left: -2px;
+        width: 14px; height: 14px;
+        border-top: 2px solid #0df20d;
+        border-left: 2px solid #0df20d;
+    }
+
+    .data-grid-border::after {
+        content: '';
+        position: absolute;
+        bottom: -2px; right: -2px;
+        width: 14px; height: 14px;
+        border-bottom: 2px solid #0df20d;
+        border-right: 2px solid #0df20d;
+    }
+
+    .futurbol-select {
+        background: #000;
+        border: 1px solid rgba(255,255,255,0.15);
+        color: #fff;
+        outline: none;
+    }
+
+    .futurbol-select:focus { border-color: rgba(13,242,13,0.5); }
+
+    .table-row:hover { background: rgba(255,255,255,0.02); }
+</style>
+
+<div class="futurbol-admin min-h-screen px-6 lg:px-20 py-16">
+    <div class="flex flex-col md:flex-row items-start md:items-center justify-between mb-12 gap-6">
+        <div>
+            <div class="flex items-center gap-3 mb-3">
+                <div class="w-2 h-2 bg-alert rounded-full animate-pulse"></div>
+                <span class="text-[10px] lab-readout font-bold text-alert">Admin // Order Management</span>
+            </div>
+            <h1 class="text-4xl md:text-5xl font-bold uppercase tracking-tighter">Orders</h1>
+        </div>
+        <div class="flex items-center gap-3">
+            <a href="/admin" class="border border-white/30 px-4 py-2 text-[10px] lab-readout hover:bg-white hover:text-black transition-all no-underline text-white">Dashboard</a>
+            <a href="/admin/products" class="border border-white/30 px-4 py-2 text-[10px] lab-readout hover:bg-white hover:text-black transition-all no-underline text-white">Products</a>
+            <a href="/admin/categories" class="border border-white/30 px-4 py-2 text-[10px] lab-readout hover:bg-white hover:text-black transition-all no-underline text-white">Categories</a>
+        </div>
+    </div>
+
+    @* Status filter *@
+    <div class="flex gap-4 mb-8 border border-white/10 p-4 bg-black/60">
+        <select class="futurbol-select px-4 py-3 text-sm lab-readout" @onchange="OnStatusFilterChange">
+            <option value="">All Statuses</option>
+            @foreach (var status in OrderStatuses.All)
+            {
+                <option value="@status" selected="@(_statusFilter == status)">@status</option>
+            }
+        </select>
+    </div>
+
+    @if (_loading)
+    {
+        <div class="flex items-center gap-3 text-white/40 text-sm lab-readout">
+            <div class="w-2 h-2 bg-alert rounded-full animate-pulse"></div>Loading orders...
+        </div>
+    }
+    else if (!_orders.Any())
+    {
+        <div class="border border-white/10 p-12 text-center">
+            <div class="text-white/30 text-sm lab-readout">No orders found.</div>
+        </div>
+    }
+    else
+    {
+        <div class="data-grid-border bg-black/60 overflow-x-auto">
+            <table class="w-full">
+                <thead>
+                    <tr class="border-b border-white/10">
+                        <th class="text-left px-6 py-4 text-[10px] lab-readout text-white/40 font-normal">ID</th>
+                        <th class="text-left px-6 py-4 text-[10px] lab-readout text-white/40 font-normal">Customer</th>
+                        <th class="text-left px-6 py-4 text-[10px] lab-readout text-white/40 font-normal">Date</th>
+                        <th class="text-left px-6 py-4 text-[10px] lab-readout text-white/40 font-normal">Items</th>
+                        <th class="text-left px-6 py-4 text-[10px] lab-readout text-white/40 font-normal">Total</th>
+                        <th class="text-left px-6 py-4 text-[10px] lab-readout text-white/40 font-normal">Status</th>
+                        <th class="text-right px-6 py-4 text-[10px] lab-readout text-white/40 font-normal">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var order in _orders)
+                    {
+                        <tr class="table-row border-b border-white/5 transition-colors">
+                            <td class="px-6 py-4 text-[10px] lab-readout text-white/40">#@order.Id.ToString("D4")</td>
+                            <td class="px-6 py-4">
+                                <div class="font-bold text-sm">@(order.FullName)</div>
+                                <div class="text-[10px] text-white/40">@order.User?.Email</div>
+                            </td>
+                            <td class="px-6 py-4 text-sm lab-readout text-white/60">@order.OrderDate.ToString("dd MMM yyyy")</td>
+                            <td class="px-6 py-4 text-sm lab-readout">@order.OrderItems.Count</td>
+                            <td class="px-6 py-4 font-bold">$@order.TotalAmount.ToString("F2")</td>
+                            <td class="px-6 py-4">
+                                <span class="text-[8px] lab-readout px-2 py-1 border @GetStatusStyle(order.Status)">@order.Status</span>
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                <a href="/admin/orders/@order.Id"
+                                   class="border border-white/30 px-3 py-2 text-[10px] lab-readout hover:bg-white hover:text-black transition-all no-underline text-white">
+                                    Manage
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <div class="mt-4 text-[10px] lab-readout text-white/30">@_orders.Count order(s)</div>
+    }
+</div>
+
+@code {
+    private List<Order> _orders = [];
+    private string? _statusFilter;
+    private bool _loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadOrdersAsync();
+    }
+
+    private async Task LoadOrdersAsync()
+    {
+        _loading = true;
+        _orders = await OrderService.GetAllOrdersAsync(_statusFilter);
+        _loading = false;
+    }
+
+    private async Task OnStatusFilterChange(ChangeEventArgs e)
+    {
+        _statusFilter = string.IsNullOrWhiteSpace(e.Value?.ToString()) ? null : e.Value.ToString();
+        await LoadOrdersAsync();
+    }
+
+    private string GetStatusStyle(string status) => status switch
+    {
+        OrderStatuses.Pending => "border-yellow-500/40 text-yellow-400",
+        OrderStatuses.Paid => "border-blue-500/40 text-blue-400",
+        OrderStatuses.Shipped => "border-purple-500/40 text-purple-400",
+        OrderStatuses.Delivered => "border-alert/40 text-alert",
+        OrderStatuses.Cancelled => "border-red-500/40 text-red-400",
+        _ => "border-white/20 text-white/40"
+    };
+}

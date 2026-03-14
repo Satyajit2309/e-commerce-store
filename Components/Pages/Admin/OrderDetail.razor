@@ -1,0 +1,287 @@
+@page "/admin/orders/{Id:int}"
+@attribute [Authorize(Roles = EcommerceStore.Constants.Roles.Admin)]
+@using EcommerceStore.Services.Interfaces
+@using EcommerceStore.Models.Entities
+@using EcommerceStore.Constants
+@inject IOrderService OrderService
+@inject NavigationManager Nav
+@rendermode InteractiveServer
+
+<PageTitle>Order #@Id | Admin | Futurbol</PageTitle>
+
+<style type="text/tailwindcss">
+    .futurbol-admin {
+        background-color: #000000;
+        color: #ffffff;
+        font-family: 'Space Grotesk', sans-serif;
+        background-image:
+            linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+        background-size: 50px 50px;
+    }
+
+    .lab-readout {
+        font-family: 'Space Grotesk', monospace;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+    }
+
+    .data-grid-border {
+        border: 1px solid rgba(255,255,255,0.1);
+        position: relative;
+    }
+
+    .data-grid-border::before {
+        content: '';
+        position: absolute;
+        top: -2px; left: -2px;
+        width: 14px; height: 14px;
+        border-top: 2px solid #0df20d;
+        border-left: 2px solid #0df20d;
+    }
+
+    .data-grid-border::after {
+        content: '';
+        position: absolute;
+        bottom: -2px; right: -2px;
+        width: 14px; height: 14px;
+        border-bottom: 2px solid #0df20d;
+        border-right: 2px solid #0df20d;
+    }
+
+    .toast-msg {
+        position: fixed;
+        bottom: 2rem;
+        right: 2rem;
+        z-index: 100;
+        padding: 1rem 1.5rem;
+        font-size: 0.75rem;
+        background: rgba(0,0,0,0.95);
+        backdrop-filter: blur(8px);
+        animation: toastIn 0.3s ease-out;
+    }
+
+    .toast-error {
+        border: 1px solid rgba(239,68,68,0.4);
+        color: #f87171;
+    }
+
+    .toast-success {
+        border: 1px solid rgba(13,242,13,0.3);
+        color: #0df20d;
+    }
+
+    @@keyframes toastIn {
+        from { transform: translateY(1rem); opacity: 0; }
+        to   { transform: translateY(0); opacity: 1; }
+    }
+</style>
+
+<div class="futurbol-admin min-h-screen px-6 lg:px-20 py-16">
+    <div class="mb-8">
+        <a href="/admin/orders" class="text-[10px] lab-readout text-white/40 hover:text-alert transition-colors no-underline flex items-center gap-2">
+            <span class="material-symbols-outlined text-sm">arrow_back</span>Back to Orders
+        </a>
+    </div>
+
+    @if (_loading)
+    {
+        <div class="flex items-center gap-3 text-white/40 text-sm lab-readout">
+            <div class="w-2 h-2 bg-alert rounded-full animate-pulse"></div>Loading order...
+        </div>
+    }
+    else if (_order is null)
+    {
+        <div class="border border-white/10 p-12 text-center">
+            <div class="text-white/30 text-sm lab-readout">Order not found.</div>
+        </div>
+    }
+    else
+    {
+        <div class="flex flex-col md:flex-row items-start md:items-center justify-between mb-12 gap-6">
+            <div>
+                <div class="flex items-center gap-3 mb-3">
+                    <div class="w-2 h-2 bg-alert rounded-full animate-pulse"></div>
+                    <span class="text-[10px] lab-readout font-bold text-alert">Admin // Order Detail</span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <h1 class="text-4xl md:text-5xl font-bold uppercase tracking-tighter">Order #@_order.Id.ToString("D4")</h1>
+                    <span class="text-[10px] lab-readout px-3 py-1.5 border @GetStatusStyle(_order.Status)">@_order.Status</span>
+                </div>
+            </div>
+        </div>
+
+        @* Info cards *@
+        <div class="grid lg:grid-cols-3 gap-8 mb-12">
+            <div class="border border-white/10 bg-black/60 p-6">
+                <div class="text-[10px] lab-readout text-alert font-bold mb-4 pb-2 border-b border-white/10">Customer</div>
+                <div class="space-y-3 text-sm">
+                    <div>
+                        <span class="text-white/40 text-[10px] lab-readout block mb-1">Name</span>
+                        <span class="font-bold">@_order.FullName</span>
+                    </div>
+                    <div>
+                        <span class="text-white/40 text-[10px] lab-readout block mb-1">Email</span>
+                        <span>@_order.User?.Email</span>
+                    </div>
+                    <div>
+                        <span class="text-white/40 text-[10px] lab-readout block mb-1">Phone</span>
+                        <span>@_order.PhoneNumber</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="border border-white/10 bg-black/60 p-6">
+                <div class="text-[10px] lab-readout text-alert font-bold mb-4 pb-2 border-b border-white/10">Shipping</div>
+                <div class="space-y-3 text-sm">
+                    <div>
+                        <span class="text-white/40 text-[10px] lab-readout block mb-1">Address</span>
+                        <span>@_order.ShippingAddress</span>
+                    </div>
+                    <div>
+                        <span class="text-white/40 text-[10px] lab-readout block mb-1">Order Date</span>
+                        <span class="lab-readout">@_order.OrderDate.ToString("dd MMM yyyy, HH:mm")</span>
+                    </div>
+                    <div>
+                        <span class="text-white/40 text-[10px] lab-readout block mb-1">Total</span>
+                        <span class="font-bold text-lg">$@_order.TotalAmount.ToString("F2")</span>
+                    </div>
+                </div>
+            </div>
+
+            @* Status control *@
+            <div class="data-grid-border bg-black p-6">
+                <div class="text-[10px] lab-readout text-alert font-bold mb-4 pb-2 border-b border-white/10">Update Status</div>
+
+                @if (_order.Status == OrderStatuses.Delivered || _order.Status == OrderStatuses.Cancelled)
+                {
+                    <div class="text-white/40 text-sm lab-readout mb-4">
+                        This order is @(_order.Status.ToLower()). No further status changes available.
+                    </div>
+                }
+                else
+                {
+                    <div class="space-y-3">
+                        <div class="text-[10px] lab-readout text-white/40 mb-2">Current: <span class="text-white font-bold">@_order.Status</span></div>
+                        <div class="text-[10px] lab-readout text-white/40 mb-4">Available transitions:</div>
+
+                        @foreach (var nextStatus in GetValidTransitions(_order.Status))
+                        {
+                            <button class="w-full border px-4 py-3 text-[10px] lab-readout font-bold transition-all disabled:opacity-30 @GetTransitionBtnStyle(nextStatus)"
+                                    @onclick="() => UpdateStatus(nextStatus)"
+                                    disabled="@_updating">
+                                @(nextStatus == OrderStatuses.Cancelled ? "Cancel Order" : $"Mark as {nextStatus}")
+                            </button>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+
+        @* Line items *@
+        <div class="data-grid-border bg-black/60 overflow-x-auto">
+            <table class="w-full">
+                <thead>
+                    <tr class="border-b border-white/10">
+                        <th class="text-left px-6 py-4 text-[10px] lab-readout text-white/40 font-normal">Product</th>
+                        <th class="text-left px-6 py-4 text-[10px] lab-readout text-white/40 font-normal">Category</th>
+                        <th class="text-left px-6 py-4 text-[10px] lab-readout text-white/40 font-normal">Unit Price</th>
+                        <th class="text-left px-6 py-4 text-[10px] lab-readout text-white/40 font-normal">Qty</th>
+                        <th class="text-right px-6 py-4 text-[10px] lab-readout text-white/40 font-normal">Line Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in _order.OrderItems)
+                    {
+                        <tr class="border-b border-white/5">
+                            <td class="px-6 py-4 font-bold text-sm uppercase">@item.Product?.Name</td>
+                            <td class="px-6 py-4 text-[10px] lab-readout text-white/60">@item.Product?.Category?.Name</td>
+                            <td class="px-6 py-4">$@item.UnitPrice.ToString("F2")</td>
+                            <td class="px-6 py-4">@item.Quantity</td>
+                            <td class="px-6 py-4 text-right font-bold">$@item.LineTotal.ToString("F2")</td>
+                        </tr>
+                    }
+                </tbody>
+                <tfoot>
+                    <tr class="border-t border-white/20">
+                        <td colspan="4" class="px-6 py-4 text-right text-[10px] lab-readout text-white/40 font-bold">Order Total</td>
+                        <td class="px-6 py-4 text-right text-lg font-bold">$@_order.TotalAmount.ToString("F2")</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    }
+</div>
+
+@if (!string.IsNullOrEmpty(_toastMessage))
+{
+    <div class="toast-msg lab-readout @(_toastIsError ? "toast-error" : "toast-success")">
+        @_toastMessage
+    </div>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private Order? _order;
+    private bool _loading = true;
+    private bool _updating;
+    private string? _toastMessage;
+    private bool _toastIsError;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _loading = true;
+        _order = await OrderService.GetOrderByIdAsync(Id);
+        _loading = false;
+    }
+
+    private string[] GetValidTransitions(string currentStatus) => currentStatus switch
+    {
+        OrderStatuses.Pending => [OrderStatuses.Paid, OrderStatuses.Cancelled],
+        OrderStatuses.Paid => [OrderStatuses.Shipped, OrderStatuses.Cancelled],
+        OrderStatuses.Shipped => [OrderStatuses.Delivered],
+        _ => []
+    };
+
+    private async Task UpdateStatus(string newStatus)
+    {
+        _updating = true;
+        try
+        {
+            _order = await OrderService.UpdateOrderStatusAsync(Id, newStatus);
+            await ShowToast($"Status updated to {newStatus}", false);
+        }
+        catch (InvalidOperationException ex)
+        {
+            await ShowToast(ex.Message, true);
+        }
+        _updating = false;
+    }
+
+    private string GetStatusStyle(string status) => status switch
+    {
+        OrderStatuses.Pending => "border-yellow-500/40 text-yellow-400",
+        OrderStatuses.Paid => "border-blue-500/40 text-blue-400",
+        OrderStatuses.Shipped => "border-purple-500/40 text-purple-400",
+        OrderStatuses.Delivered => "border-alert/40 text-alert",
+        OrderStatuses.Cancelled => "border-red-500/40 text-red-400",
+        _ => "border-white/20 text-white/40"
+    };
+
+    private string GetTransitionBtnStyle(string status) => status switch
+    {
+        OrderStatuses.Cancelled => "border-red-500/40 text-red-400 hover:bg-red-500 hover:text-white",
+        _ => "border-white/30 text-white hover:bg-white hover:text-black"
+    };
+
+    private async Task ShowToast(string message, bool isError)
+    {
+        _toastMessage = message;
+        _toastIsError = isError;
+        StateHasChanged();
+        await Task.Delay(3000);
+        _toastMessage = null;
+        StateHasChanged();
+    }
+}

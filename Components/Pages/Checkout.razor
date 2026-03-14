@@ -1,0 +1,300 @@
+@page "/checkout"
+@attribute [Authorize]
+@using EcommerceStore.Services.Interfaces
+@using EcommerceStore.Models.Entities
+@using Microsoft.AspNetCore.Authorization
+@inject ICartService CartService
+@inject IOrderService OrderService
+@inject NavigationManager Nav
+@inject AuthenticationStateProvider AuthStateProvider
+@rendermode InteractiveServer
+
+<PageTitle>Checkout | Futurbol</PageTitle>
+
+<style type="text/tailwindcss">
+    :root { --alert-color: #0df20d; }
+
+    .futurbol-page {
+        background-color: #000000;
+        color: #ffffff;
+        font-family: 'Space Grotesk', sans-serif;
+        background-image:
+            linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+        background-size: 50px 50px;
+    }
+
+    .lab-readout {
+        font-family: 'Space Grotesk', monospace;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+    }
+
+    .data-grid-border {
+        border: 1px solid rgba(255,255,255,0.1);
+        position: relative;
+    }
+
+    .data-grid-border::before {
+        content: '';
+        position: absolute;
+        top: -2px; left: -2px;
+        width: 10px; height: 10px;
+        border-top: 2px solid var(--alert-color);
+        border-left: 2px solid var(--alert-color);
+    }
+
+    .data-grid-border::after {
+        content: '';
+        position: absolute;
+        bottom: -2px; right: -2px;
+        width: 10px; height: 10px;
+        border-bottom: 2px solid var(--alert-color);
+        border-right: 2px solid var(--alert-color);
+    }
+
+    .futurbol-input {
+        background: transparent;
+        border: 1px solid rgba(255,255,255,0.15);
+        color: #fff;
+        outline: none;
+    }
+
+    .futurbol-input:focus { border-color: rgba(13,242,13,0.5); }
+
+    .futurbol-input::placeholder { color: rgba(255,255,255,0.3); }
+
+    .toast-msg {
+        position: fixed;
+        bottom: 2rem;
+        right: 2rem;
+        z-index: 100;
+        padding: 1rem 1.5rem;
+        font-size: 0.75rem;
+        border: 1px solid rgba(239,68,68,0.4);
+        background: rgba(0,0,0,0.95);
+        backdrop-filter: blur(8px);
+        color: #f87171;
+        animation: toastIn 0.3s ease-out;
+    }
+
+    @@keyframes toastIn {
+        from { transform: translateY(1rem); opacity: 0; }
+        to   { transform: translateY(0); opacity: 1; }
+    }
+
+    .field-error {
+        border-color: rgba(239,68,68,0.5) !important;
+    }
+</style>
+
+<div class="futurbol-page min-h-screen overflow-x-hidden">
+    @* Navbar *@
+    <nav class="fixed top-0 left-0 w-full z-50 border-b border-white/20 bg-black/80 backdrop-blur-md">
+        <div class="flex items-center justify-between px-6 py-4">
+            <div class="flex flex-col">
+                <span class="text-xs text-alert lab-readout font-bold leading-none">Status: Active</span>
+                <a href="/" class="text-2xl font-bold tracking-tighter uppercase no-underline text-white">Futurbol//Lab</a>
+            </div>
+            <div class="flex items-center gap-3">
+                <a href="/catalog" class="text-[10px] lab-readout text-white/60 hover:text-alert transition-colors no-underline">Catalog</a>
+                <a href="/cart" class="text-[10px] lab-readout text-white/60 hover:text-alert transition-colors no-underline">Cart</a>
+                <a class="border border-white/30 px-4 py-2 text-[10px] lab-readout hover:bg-white hover:text-black transition-all no-underline text-white" href="/account/logout">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="pt-28 pb-20 px-6 lg:px-20">
+        <div class="mb-8">
+            <a href="/cart" class="text-[10px] lab-readout text-white/40 hover:text-alert transition-colors no-underline flex items-center gap-2">
+                <span class="material-symbols-outlined text-sm">arrow_back</span>Back to Cart
+            </a>
+        </div>
+
+        <div class="mb-12">
+            <div class="flex items-center gap-3 mb-3">
+                <div class="w-2 h-2 bg-alert rounded-full animate-pulse"></div>
+                <span class="text-[10px] lab-readout font-bold text-alert">Checkout // Finalize Order</span>
+            </div>
+            <h1 class="text-5xl md:text-6xl font-bold uppercase tracking-tighter">Checkout</h1>
+        </div>
+
+        @if (_loading)
+        {
+            <div class="flex items-center gap-3 text-white/40 text-sm lab-readout">
+                <div class="w-2 h-2 bg-alert rounded-full animate-pulse"></div>Loading order data...
+            </div>
+        }
+        else if (!_cartItems.Any())
+        {
+            <div class="border border-white/10 p-16 text-center">
+                <div class="text-white/40 text-sm lab-readout mb-4">Your cart is empty. Add items before checking out.</div>
+                <a href="/catalog" class="border border-white/30 px-8 py-4 text-[10px] lab-readout hover:bg-white hover:text-black transition-all no-underline text-white inline-block">Browse Catalog</a>
+            </div>
+        }
+        else
+        {
+            <div class="grid lg:grid-cols-2 gap-12">
+                @* Shipping form *@
+                <div>
+                    <div class="text-[10px] lab-readout text-alert font-bold mb-6 pb-2 border-b border-white/10">Shipping Details</div>
+
+                    <div class="space-y-6">
+                        <div>
+                            <label class="text-[10px] lab-readout text-white/40 block mb-2">Full Name *</label>
+                            <input class="futurbol-input w-full px-4 py-3 text-sm lab-readout @(_errors.ContainsKey("name") ? "field-error" : "")"
+                                   type="text" placeholder="Enter your full name"
+                                   @bind="_fullName" @bind:event="oninput" />
+                            @if (_errors.ContainsKey("name"))
+                            {
+                                <div class="text-red-400 text-[10px] lab-readout mt-1">@_errors["name"]</div>
+                            }
+                        </div>
+
+                        <div>
+                            <label class="text-[10px] lab-readout text-white/40 block mb-2">Shipping Address *</label>
+                            <input class="futurbol-input w-full px-4 py-3 text-sm lab-readout @(_errors.ContainsKey("address") ? "field-error" : "")"
+                                   type="text" placeholder="Street address, city, state, zip code"
+                                   @bind="_address" @bind:event="oninput" />
+                            @if (_errors.ContainsKey("address"))
+                            {
+                                <div class="text-red-400 text-[10px] lab-readout mt-1">@_errors["address"]</div>
+                            }
+                        </div>
+
+                        <div>
+                            <label class="text-[10px] lab-readout text-white/40 block mb-2">Phone Number *</label>
+                            <input class="futurbol-input w-full px-4 py-3 text-sm lab-readout @(_errors.ContainsKey("phone") ? "field-error" : "")"
+                                   type="tel" placeholder="Phone number for delivery updates"
+                                   @bind="_phone" @bind:event="oninput" />
+                            @if (_errors.ContainsKey("phone"))
+                            {
+                                <div class="text-red-400 text-[10px] lab-readout mt-1">@_errors["phone"]</div>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                @* Order summary *@
+                <div>
+                    <div class="text-[10px] lab-readout text-alert font-bold mb-6 pb-2 border-b border-white/10">Order Summary</div>
+                    <div class="data-grid-border bg-black p-6">
+                        <div class="space-y-4 mb-6">
+                            @foreach (var item in _cartItems)
+                            {
+                                <div class="flex justify-between items-center text-sm border-b border-white/5 pb-3">
+                                    <div>
+                                        <span class="font-bold uppercase">@item.Product?.Name</span>
+                                        <span class="text-white/40 text-[10px] lab-readout ml-2">x@item.Quantity</span>
+                                    </div>
+                                    <span class="lab-readout font-bold">$@(((item.Product?.Price ?? 0) * item.Quantity).ToString("F2"))</span>
+                                </div>
+                            }
+                        </div>
+
+                        <div class="flex justify-between items-center pt-4 border-t border-white/20">
+                            <span class="text-[10px] lab-readout text-white/40 font-bold">Total</span>
+                            <span class="lab-readout text-2xl font-bold">$@_cartTotal.ToString("F2")</span>
+                        </div>
+
+                        <button class="w-full bg-white text-black px-8 py-5 text-sm lab-readout font-bold hover:bg-alert transition-colors flex items-center justify-center gap-3 mt-6 disabled:opacity-40 disabled:cursor-not-allowed"
+                                @onclick="PlaceOrder"
+                                disabled="@_placing">
+                            <span class="material-symbols-outlined">@(_placing ? "hourglass_top" : "shopping_bag")</span>
+                            @(_placing ? "Processing..." : "Place Order")
+                        </button>
+                    </div>
+                </div>
+            </div>
+        }
+    </main>
+
+    <footer class="bg-black py-12 px-6 lg:px-20 border-t border-white/10">
+        <div class="flex justify-between items-center text-[8px] lab-readout text-white/20">
+            <p>(C) 2024 FUTURBOL APPAREL. ALL RIGHTS RESERVED.</p>
+            <a href="/" class="hover:text-alert transition-colors no-underline text-white/20">Home</a>
+        </div>
+    </footer>
+</div>
+
+@if (!string.IsNullOrEmpty(_errorMessage))
+{
+    <div class="toast-msg lab-readout">@_errorMessage</div>
+}
+
+@code {
+    private List<CartItem> _cartItems = [];
+    private decimal _cartTotal;
+    private bool _loading = true;
+    private bool _placing;
+    private string? _userId;
+
+    private string _fullName = string.Empty;
+    private string _address = string.Empty;
+    private string _phone = string.Empty;
+
+    private Dictionary<string, string> _errors = new();
+    private string? _errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        _userId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+        if (string.IsNullOrEmpty(_userId))
+        {
+            Nav.NavigateTo("/account/login?returnUrl=%2Fcheckout", forceLoad: true);
+            return;
+        }
+
+        _cartItems = await CartService.GetCartItemsAsync(_userId);
+        _cartTotal = _cartItems.Sum(ci => (ci.Product?.Price ?? 0) * ci.Quantity);
+        _loading = false;
+    }
+
+    private bool Validate()
+    {
+        _errors.Clear();
+
+        if (string.IsNullOrWhiteSpace(_fullName))
+            _errors["name"] = "Full name is required.";
+
+        if (string.IsNullOrWhiteSpace(_address))
+            _errors["address"] = "Shipping address is required.";
+        else if (_address.Trim().Length < 10)
+            _errors["address"] = "Please enter a complete address.";
+
+        if (string.IsNullOrWhiteSpace(_phone))
+            _errors["phone"] = "Phone number is required.";
+        else if (_phone.Trim().Length < 7)
+            _errors["phone"] = "Please enter a valid phone number.";
+
+        return _errors.Count == 0;
+    }
+
+    private async Task PlaceOrder()
+    {
+        if (!Validate()) return;
+
+        _placing = true;
+        _errorMessage = null;
+
+        try
+        {
+            var order = await OrderService.PlaceOrderAsync(_userId!, _fullName.Trim(), _address.Trim(), _phone.Trim());
+            Nav.NavigateTo($"/orders/{order.Id}", forceLoad: true);
+        }
+        catch (InvalidOperationException ex)
+        {
+            _errorMessage = ex.Message;
+            StateHasChanged();
+            await Task.Delay(5000);
+            _errorMessage = null;
+            StateHasChanged();
+        }
+        finally
+        {
+            _placing = false;
+        }
+    }
+}

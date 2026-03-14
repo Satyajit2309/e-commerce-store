@@ -1,5 +1,10 @@
 @page "/admin"
 @attribute [Authorize(Roles = Roles.Admin)]
+@using EcommerceStore.Services.Interfaces
+@using EcommerceStore.Constants
+@inject IProductService ProductService
+@inject IOrderService OrderService
+@rendermode InteractiveServer
 
 <PageTitle>Admin Dashboard | Futurbol</PageTitle>
 
@@ -84,28 +89,33 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px bg-white/10 border border-white/10 mb-16">
         <div class="stat-card bg-black p-8">
             <div class="text-[10px] lab-readout text-white/40 mb-2">Total Orders</div>
-            <div class="text-3xl font-bold">--</div>
-            <div class="text-[8px] lab-readout text-alert mt-2">Pending Setup</div>
+            <div class="text-3xl font-bold">@_orderCount</div>
+            <div class="text-[8px] lab-readout text-alert mt-2">Live Data</div>
         </div>
         <div class="stat-card bg-black p-8">
             <div class="text-[10px] lab-readout text-white/40 mb-2">Products</div>
-            <div class="text-3xl font-bold">--</div>
-            <div class="text-[8px] lab-readout text-alert mt-2">Pending Setup</div>
+            <div class="text-3xl font-bold">@_productCount</div>
+            <div class="text-[8px] lab-readout text-alert mt-2">Live Data</div>
         </div>
         <div class="stat-card bg-black p-8">
             <div class="text-[10px] lab-readout text-white/40 mb-2">Revenue</div>
-            <div class="text-3xl font-bold">--</div>
-            <div class="text-[8px] lab-readout text-alert mt-2">Pending Setup</div>
+            <div class="text-3xl font-bold">$@_revenue.ToString("F0")</div>
+            <div class="text-[8px] lab-readout text-alert mt-2">Excl. Cancelled</div>
         </div>
         <div class="stat-card bg-black p-8">
-            <div class="text-[10px] lab-readout text-white/40 mb-2">Customers</div>
-            <div class="text-3xl font-bold">--</div>
-            <div class="text-[8px] lab-readout text-alert mt-2">Pending Setup</div>
+            <div class="text-[10px] lab-readout text-white/40 mb-2">Avg Order</div>
+            <div class="text-3xl font-bold">$@(_orderCount > 0 ? (_revenue / _orderCount).ToString("F0") : "0")</div>
+            <div class="text-[8px] lab-readout text-alert mt-2">Per Order</div>
+        </div>
+        <div class="stat-card bg-black p-8">
+            <div class="text-[10px] lab-readout text-white/40 mb-2">Low Stock Items</div>
+            <div class="text-3xl font-bold text-red-500">@_lowStockCount</div>
+            <div class="text-[8px] lab-readout text-alert mt-2">Stock &le; 5</div>
         </div>
     </div>
 
     @* Quick links *@
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-2xl">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-4xl">
         <a href="/admin/products"
            class="data-grid-border bg-black/60 p-8 group hover:bg-white/[0.02] transition-colors no-underline text-white block">
             <div class="flex items-center gap-3 mb-4">
@@ -122,5 +132,28 @@
             </div>
             <p class="text-white/40 text-xs lab-readout">Create and manage product categories.</p>
         </a>
+        <a href="/admin/orders"
+           class="data-grid-border bg-black/60 p-8 group hover:bg-white/[0.02] transition-colors no-underline text-white block">
+            <div class="flex items-center gap-3 mb-4">
+                <span class="material-symbols-outlined text-alert">receipt_long</span>
+                <span class="text-xs lab-readout font-bold group-hover:text-alert transition-colors">Orders</span>
+            </div>
+            <p class="text-white/40 text-xs lab-readout">View and manage customer orders and status.</p>
+        </a>
     </div>
 </div>
+
+@code {
+    private int _orderCount;
+    private int _productCount;
+    private decimal _revenue;
+    private int _lowStockCount;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _orderCount = await OrderService.GetOrderCountAsync();
+        _productCount = await ProductService.GetProductCountAsync();
+        _revenue = await OrderService.GetTotalRevenueAsync();
+        _lowStockCount = await ProductService.GetLowStockProductCountAsync(5);
+    }
+}

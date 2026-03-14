@@ -10,4 +10,5 @@ public interface IProductService
     Task<Product> CreateProductAsync(Product product);
     Task<Product?> UpdateProductAsync(Product product);
     Task<bool> DeleteProductAsync(int id);
+    Task<int> GetLowStockProductCountAsync(int threshold = 5);
 }

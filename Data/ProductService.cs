@@ -80,8 +80,21 @@ public class ProductService : IProductService
         var product = await _db.Products.FindAsync(id);
         if (product is null) return false;
 
-        _db.Products.Remove(product);
-        await _db.SaveChangesAsync();
-        return true;
+        try
+        {
+            _db.Products.Remove(product);
+            await _db.SaveChangesAsync();
+            return true;
+        }
+        catch (DbUpdateException)
+        {
+            // Log exception here if logging is configured
+            return false; // Typically means a constraint violation, e.g., product is in an order
+        }
+    }
+
+    public async Task<int> GetLowStockProductCountAsync(int threshold = 5)
+    {
+        return await _db.Products.CountAsync(p => p.Stock <= threshold && p.IsActive);
     }
 }

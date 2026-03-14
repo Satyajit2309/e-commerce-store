@@ -2,7 +2,9 @@
 @using EcommerceStore.Services.Interfaces
 @using EcommerceStore.Models.Entities
 @inject IProductService ProductService
+@inject ICartService CartService
 @inject NavigationManager Nav
+@inject AuthenticationStateProvider AuthStateProvider
 @rendermode InteractiveServer
 
 <PageTitle>@(_product?.Name ?? "Product") | Futurbol</PageTitle>
@@ -48,6 +50,33 @@
         border-bottom: 2px solid var(--alert-color);
         border-right: 2px solid var(--alert-color);
     }
+    .toast-msg {
+        position: fixed;
+        bottom: 2rem;
+        right: 2rem;
+        z-index: 100;
+        padding: 1rem 1.5rem;
+        font-size: 0.75rem;
+        border: 1px solid rgba(13,242,13,0.3);
+        background: rgba(0,0,0,0.95);
+        backdrop-filter: blur(8px);
+        animation: toastIn 0.3s ease-out;
+    }
+
+    .toast-error {
+        border-color: rgba(239,68,68,0.4);
+        color: #f87171;
+    }
+
+    .toast-success {
+        border-color: rgba(13,242,13,0.3);
+        color: #0df20d;
+    }
+
+    @@keyframes toastIn {
+        from { transform: translateY(1rem); opacity: 0; }
+        to   { transform: translateY(0); opacity: 1; }
+    }
 </style>
 
 <div class="futurbol-page min-h-screen overflow-x-hidden">
@@ -68,7 +97,7 @@
                         <a class="border border-white/30 px-4 py-2 text-[10px] lab-readout hover:bg-white hover:text-black transition-all no-underline text-white" href="/account/login">Login</a>
                     </NotAuthorized>
                 </AuthorizeView>
-                <button class="border border-white/30 px-4 py-2 text-[10px] lab-readout hover:bg-white hover:text-black transition-all">Cart (0)</button>
+                <a href="/cart" class="border border-white/30 px-4 py-2 text-[10px] lab-readout hover:bg-white hover:text-black transition-all no-underline text-white">Cart (@_cartCount)</a>
             </div>
         </div>
     </nav>
@@ -149,9 +178,17 @@
                     @* CTA *@
                     <div class="space-y-3">
                         <button class="w-full bg-white text-black px-8 py-5 text-sm lab-readout font-bold hover:bg-alert transition-colors flex items-center justify-center gap-3 disabled:opacity-40 disabled:cursor-not-allowed"
-                                disabled="@(_product.Stock == 0)">
+                                disabled="@(_product.Stock == 0 || _addingToCart)"
+                                @onclick="AddToCart">
                             <span class="material-symbols-outlined">add_shopping_cart</span>
-                            @(_product.Stock > 0 ? "Add to Cart" : "Out of Stock")
+                            @if (_addingToCart)
+                            {
+                                <span>Adding...</span>
+                            }
+                            else
+                            {
+                                @(_product.Stock > 0 ? "Add to Cart" : "Out of Stock")
+                            }
                         </button>
                         <a href="/catalog"
                            class="w-full border border-white/30 px-8 py-4 text-xs lab-readout font-bold hover:bg-white/10 transition-colors flex items-center justify-center gap-3 no-underline text-white">
@@ -185,16 +222,71 @@
     </footer>
 </div>
 
+@* Toast notification *@
+@if (!string.IsNullOrEmpty(_toastMessage))
+{
+    <div class="toast-msg lab-readout @(_toastIsError ? "toast-error" : "toast-success")">
+        @_toastMessage
+    </div>
+}
+
 @code {
     [Parameter] public int Id { get; set; }
 
     private Product? _product;
     private bool     _loading = true;
+    private bool     _addingToCart;
+    private int      _cartCount;
+    private string?  _userId;
+    private string?  _toastMessage;
+    private bool     _toastIsError;
 
     protected override async Task OnParametersSetAsync()
     {
         _loading = true;
         _product = await ProductService.GetProductByIdAsync(Id);
+
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        _userId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (!string.IsNullOrEmpty(_userId))
+        {
+            _cartCount = await CartService.GetCartCountAsync(_userId);
+        }
+
         _loading = false;
+    }
+
+    private async Task AddToCart()
+    {
+        if (_product is null || _product.Stock == 0) return;
+
+        if (string.IsNullOrEmpty(_userId))
+        {
+            Nav.NavigateTo($"/account/login?returnUrl=%2Fcatalog%2F{Id}", forceLoad: true);
+            return;
+        }
+
+        _addingToCart = true;
+        try
+        {
+            await CartService.AddToCartAsync(_userId, _product.Id);
+            _cartCount = await CartService.GetCartCountAsync(_userId);
+            await ShowToast("Added to cart", false);
+        }
+        catch (InvalidOperationException ex)
+        {
+            await ShowToast(ex.Message, true);
+        }
+        _addingToCart = false;
+    }
+
+    private async Task ShowToast(string message, bool isError)
+    {
+        _toastMessage = message;
+        _toastIsError = isError;
+        StateHasChanged();
+        await Task.Delay(3000);
+        _toastMessage = null;
+        StateHasChanged();
     }
 }

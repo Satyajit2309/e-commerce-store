@@ -174,3 +174,4 @@ D:\Code\.NET\e-commerce-store\bin\Debug\net10.0\zh-Hans\Microsoft.CodeAnalysis.W
 D:\Code\.NET\e-commerce-store\bin\Debug\net10.0\zh-Hant\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll
 D:\Code\.NET\e-commerce-store\obj\Debug\net10.0\EcommerceStore.csproj.AssemblyReference.cache
 D:\Code\.NET\e-commerce-store\obj\Debug\net10.0\Ecommerc.AFC13BB4.Up2Date
+D:\Code\.NET\e-commerce-store\obj\Debug\net10.0\EcommerceStore.sourcelink.json

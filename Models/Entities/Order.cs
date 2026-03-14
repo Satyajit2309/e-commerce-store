@@ -7,6 +7,7 @@ public class Order
     public DateTime OrderDate { get; set; } = DateTime.UtcNow;
     public string Status { get; set; } = "Pending";
     public decimal TotalAmount { get; set; }
+    public string FullName { get; set; } = string.Empty;
     public string ShippingAddress { get; set; } = string.Empty;
     public string PhoneNumber { get; set; } = string.Empty;
 

@@ -1,0 +1,153 @@
+@page "/orders"
+@attribute [Authorize]
+@using EcommerceStore.Services.Interfaces
+@using EcommerceStore.Models.Entities
+@using EcommerceStore.Constants
+@using Microsoft.AspNetCore.Authorization
+@inject IOrderService OrderService
+@inject NavigationManager Nav
+@inject AuthenticationStateProvider AuthStateProvider
+@rendermode InteractiveServer
+
+<PageTitle>My Orders | Futurbol</PageTitle>
+
+<style type="text/tailwindcss">
+    :root { --alert-color: #0df20d; }
+
+    .futurbol-page {
+        background-color: #000000;
+        color: #ffffff;
+        font-family: 'Space Grotesk', sans-serif;
+        background-image:
+            linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+        background-size: 50px 50px;
+    }
+
+    .lab-readout {
+        font-family: 'Space Grotesk', monospace;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+    }
+
+    .order-row {
+        border-bottom: 1px solid rgba(255,255,255,0.06);
+        transition: background 0.2s ease;
+    }
+
+    .order-row:hover { background: rgba(255,255,255,0.02); }
+</style>
+
+<div class="futurbol-page min-h-screen overflow-x-hidden">
+    <nav class="fixed top-0 left-0 w-full z-50 border-b border-white/20 bg-black/80 backdrop-blur-md">
+        <div class="flex items-center justify-between px-6 py-4">
+            <div class="flex flex-col">
+                <span class="text-xs text-alert lab-readout font-bold leading-none">Status: Active</span>
+                <a href="/" class="text-2xl font-bold tracking-tighter uppercase no-underline text-white">Futurbol//Lab</a>
+            </div>
+            <div class="flex items-center gap-3">
+                <a href="/catalog" class="text-[10px] lab-readout text-white/60 hover:text-alert transition-colors no-underline">Catalog</a>
+                <a href="/orders" class="text-[10px] lab-readout text-alert border-b border-alert pb-0.5 no-underline">Orders</a>
+                <a class="border border-white/30 px-4 py-2 text-[10px] lab-readout hover:bg-white hover:text-black transition-all no-underline text-white" href="/account/logout">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="pt-28 pb-20 px-6 lg:px-20">
+        <div class="mb-12">
+            <div class="flex items-center gap-3 mb-3">
+                <div class="w-2 h-2 bg-alert rounded-full animate-pulse"></div>
+                <span class="text-[10px] lab-readout font-bold text-alert">Orders // History</span>
+            </div>
+            <h1 class="text-5xl md:text-6xl font-bold uppercase tracking-tighter">My Orders</h1>
+        </div>
+
+        @if (_loading)
+        {
+            <div class="flex items-center gap-3 text-white/40 text-sm lab-readout">
+                <div class="w-2 h-2 bg-alert rounded-full animate-pulse"></div>Loading orders...
+            </div>
+        }
+        else if (!_orders.Any())
+        {
+            <div class="border border-white/10 p-16 text-center">
+                <span class="material-symbols-outlined text-white/10 text-7xl block mb-6">receipt_long</span>
+                <div class="text-white/40 text-sm lab-readout mb-2">No orders yet</div>
+                <p class="text-white/20 text-xs lab-readout mb-8">Your order history will appear here after you place an order.</p>
+                <a href="/catalog" class="border border-white/30 px-8 py-4 text-[10px] lab-readout hover:bg-white hover:text-black transition-all no-underline text-white inline-block">Browse Catalog</a>
+            </div>
+        }
+        else
+        {
+            <div class="border border-white/10 bg-black/60">
+                <div class="hidden md:grid grid-cols-12 gap-4 px-8 py-4 border-b border-white/10 text-[10px] lab-readout text-white/40 font-bold">
+                    <div class="col-span-2">Order ID</div>
+                    <div class="col-span-3">Date</div>
+                    <div class="col-span-2">Items</div>
+                    <div class="col-span-2">Total</div>
+                    <div class="col-span-2">Status</div>
+                    <div class="col-span-1"></div>
+                </div>
+
+                @foreach (var order in _orders)
+                {
+                    <div class="order-row grid grid-cols-1 md:grid-cols-12 gap-4 px-8 py-5 items-center">
+                        <div class="md:col-span-2 text-[10px] lab-readout text-white/60">#@order.Id.ToString("D4")</div>
+                        <div class="md:col-span-3 text-sm lab-readout text-white/60">@order.OrderDate.ToString("dd MMM yyyy, HH:mm")</div>
+                        <div class="md:col-span-2 text-sm lab-readout">@order.OrderItems.Count item(s)</div>
+                        <div class="md:col-span-2 text-sm lab-readout font-bold">$@order.TotalAmount.ToString("F2")</div>
+                        <div class="md:col-span-2">
+                            <span class="text-[8px] lab-readout px-2 py-1 border @GetStatusStyle(order.Status)">
+                                @order.Status
+                            </span>
+                        </div>
+                        <div class="md:col-span-1 text-right">
+                            <a href="/orders/@order.Id"
+                               class="border border-white/20 px-3 py-2 text-[10px] lab-readout hover:bg-white hover:text-black transition-all no-underline text-white">
+                                View
+                            </a>
+                        </div>
+                    </div>
+                }
+            </div>
+            <div class="mt-4 text-[10px] lab-readout text-white/30">@_orders.Count order(s) total</div>
+        }
+    </main>
+
+    <footer class="bg-black py-12 px-6 lg:px-20 border-t border-white/10">
+        <div class="flex justify-between items-center text-[8px] lab-readout text-white/20">
+            <p>(C) 2024 FUTURBOL APPAREL. ALL RIGHTS RESERVED.</p>
+            <a href="/" class="hover:text-alert transition-colors no-underline text-white/20">Home</a>
+        </div>
+    </footer>
+</div>
+
+@code {
+    private List<Order> _orders = [];
+    private bool _loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var userId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+        if (string.IsNullOrEmpty(userId))
+        {
+            Nav.NavigateTo("/account/login?returnUrl=%2Forders", forceLoad: true);
+            return;
+        }
+
+        _orders = await OrderService.GetOrdersForUserAsync(userId);
+        _loading = false;
+    }
+
+    private string GetStatusStyle(string status) => status switch
+    {
+        OrderStatuses.Pending => "border-yellow-500/40 text-yellow-400",
+        OrderStatuses.Paid => "border-blue-500/40 text-blue-400",
+        OrderStatuses.Shipped => "border-purple-500/40 text-purple-400",
+        OrderStatuses.Delivered => "border-alert/40 text-alert",
+        OrderStatuses.Cancelled => "border-red-500/40 text-red-400",
+        _ => "border-white/20 text-white/40"
+    };
+}

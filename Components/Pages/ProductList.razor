@@ -3,7 +3,9 @@
 @using EcommerceStore.Models.Entities
 @inject IProductService ProductService
 @inject ICategoryService CategoryService
+@inject ICartService CartService
 @inject NavigationManager Nav
+@inject AuthenticationStateProvider AuthStateProvider
 @rendermode InteractiveServer
 
 <PageTitle>Catalog | Futurbol</PageTitle>
@@ -60,6 +62,34 @@
     }
 
     .futurbol-select:focus { border-color: rgba(13,242,13,0.5); }
+
+    .toast-msg {
+        position: fixed;
+        bottom: 2rem;
+        right: 2rem;
+        z-index: 100;
+        padding: 1rem 1.5rem;
+        font-size: 0.75rem;
+        border: 1px solid rgba(13,242,13,0.3);
+        background: rgba(0,0,0,0.95);
+        backdrop-filter: blur(8px);
+        animation: toastIn 0.3s ease-out;
+    }
+
+    .toast-error {
+        border-color: rgba(239,68,68,0.4);
+        color: #f87171;
+    }
+
+    .toast-success {
+        border-color: rgba(13,242,13,0.3);
+        color: #0df20d;
+    }
+
+    @@keyframes toastIn {
+        from { transform: translateY(1rem); opacity: 0; }
+        to   { transform: translateY(0); opacity: 1; }
+    }
 </style>
 
 <div class="futurbol-page min-h-screen overflow-x-hidden">
@@ -83,7 +113,7 @@
                         <a class="border border-white/30 px-4 py-2 text-[10px] lab-readout hover:bg-white hover:text-black transition-all no-underline text-white" href="/account/login">Login</a>
                     </NotAuthorized>
                 </AuthorizeView>
-                <button class="border border-white/30 px-4 py-2 text-[10px] lab-readout hover:bg-white hover:text-black transition-all">Cart (0)</button>
+                <a href="/cart" class="border border-white/30 px-4 py-2 text-[10px] lab-readout hover:bg-white hover:text-black transition-all no-underline text-white">Cart (@_cartCount)</a>
             </div>
         </div>
     </nav>
@@ -163,10 +193,17 @@
                                 <span class="text-2xl font-bold">$@product.Price.ToString("F2")</span>
                                 <div class="text-[8px] text-white/30 mt-1">Stock: @product.Stock units</div>
                             </div>
-                            <a href="/catalog/@product.Id"
-                               class="w-12 h-12 flex items-center justify-center border border-white/30 hover:bg-alert hover:text-black hover:border-alert transition-all no-underline text-white">
-                                <span class="material-symbols-outlined text-sm">arrow_forward</span>
-                            </a>
+                            <div class="flex gap-2">
+                                <a href="/catalog/@product.Id"
+                                   class="w-12 h-12 flex items-center justify-center border border-white/30 hover:bg-alert hover:text-black hover:border-alert transition-all no-underline text-white">
+                                    <span class="material-symbols-outlined text-sm">arrow_forward</span>
+                                </a>
+                                <button class="w-12 h-12 flex items-center justify-center border border-white/30 hover:bg-alert hover:text-black hover:border-alert transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                                        @onclick="() => AddToCart(product)"
+                                        disabled="@(product.Stock == 0 || _addingProductId == product.Id)">
+                                    <span class="material-symbols-outlined text-sm">@(_addingProductId == product.Id ? "hourglass_top" : "add_shopping_cart")</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 }
@@ -185,6 +222,14 @@
     </footer>
 </div>
 
+@* Toast notification *@
+@if (!string.IsNullOrEmpty(_toastMessage))
+{
+    <div class="toast-msg lab-readout @(_toastIsError ? "toast-error" : "toast-success")">
+        @_toastMessage
+    </div>
+}
+
 @code {
     private List<Product>  _products   = [];
     private List<Category> _categories = [];
@@ -192,9 +237,21 @@
     private int?    _selectedCategory = null;
     private string  _sort             = "name_asc";
     private bool    _loading          = true;
+    private int     _cartCount;
+    private string? _userId;
+    private int?    _addingProductId;
+    private string? _toastMessage;
+    private bool    _toastIsError;
 
     protected override async Task OnInitializedAsync()
     {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        _userId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (!string.IsNullOrEmpty(_userId))
+        {
+            _cartCount = await CartService.GetCartCountAsync(_userId);
+        }
+
         _categories = await CategoryService.GetCategoriesAsync();
         await LoadProductsAsync();
     }
@@ -222,5 +279,37 @@
     {
         _sort = e.Value?.ToString() ?? "name_asc";
         await LoadProductsAsync();
+    }
+
+    private async Task AddToCart(Product product)
+    {
+        if (string.IsNullOrEmpty(_userId))
+        {
+            Nav.NavigateTo("/account/login?returnUrl=%2Fcatalog", forceLoad: true);
+            return;
+        }
+
+        _addingProductId = product.Id;
+        try
+        {
+            await CartService.AddToCartAsync(_userId, product.Id);
+            _cartCount = await CartService.GetCartCountAsync(_userId);
+            await ShowToast($"{product.Name} added to cart", false);
+        }
+        catch (InvalidOperationException ex)
+        {
+            await ShowToast(ex.Message, true);
+        }
+        _addingProductId = null;
+    }
+
+    private async Task ShowToast(string message, bool isError)
+    {
+        _toastMessage = message;
+        _toastIsError = isError;
+        StateHasChanged();
+        await Task.Delay(3000);
+        _toastMessage = null;
+        StateHasChanged();
     }
 }

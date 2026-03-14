@@ -9,25 +9,30 @@ public static class DbInitializer
 {
     public static async Task SeedCatalogAsync(ApplicationDbContext db)
     {
-        if (await db.Categories.AnyAsync()) return;
-
-        var categories = new List<Category>
+        // Only seed categories if none exist
+        if (!await db.Categories.AnyAsync())
         {
-            new() { Name = "Club Kits",       Description = "Official and replica kits from top clubs worldwide." },
-            new() { Name = "National Teams",  Description = "International national team jerseys." },
-            new() { Name = "Retro Classics",  Description = "Vintage and throwback football shirts." },
-            new() { Name = "Limited Edition", Description = "Exclusive, limited-run performance wear." },
-        };
+            var newCategories = new List<Category>
+            {
+                new() { Name = "Club Kits",       Description = "Official and replica kits from top clubs worldwide." },
+                new() { Name = "National Teams",  Description = "International national team jerseys." },
+                new() { Name = "Retro Classics",  Description = "Vintage and throwback football shirts." },
+                new() { Name = "Limited Edition", Description = "Exclusive, limited-run performance wear." },
+            };
 
-        db.Categories.AddRange(categories);
-        await db.SaveChangesAsync();
+            db.Categories.AddRange(newCategories);
+            await db.SaveChangesAsync();
+        }
 
-        var clubKits      = categories[0];
-        var nationalTeams = categories[1];
-        var retro         = categories[2];
-        var limited       = categories[3];
+        var categories = await db.Categories.ToListAsync();
+        var clubKits      = categories.FirstOrDefault(c => c.Name == "Club Kits");
+        var nationalTeams = categories.FirstOrDefault(c => c.Name == "National Teams");
+        var retro         = categories.FirstOrDefault(c => c.Name == "Retro Classics");
+        var limited       = categories.FirstOrDefault(c => c.Name == "Limited Edition");
 
-        var products = new List<Product>
+        if (clubKits == null || nationalTeams == null || retro == null || limited == null) return;
+
+        var productsToSeed = new List<Product>
         {
             new() { Name = "Neon Strike V2",    Description = "High-visibility training jersey with micro-ventilation.", Price = 129.00m, Stock = 50, CategoryId = limited.Id,       IsActive = true, ImageUrl = "https://lh3.googleusercontent.com/aida-public/AB6AXuBjVZprmP2dMJoZyoqdfrh6-ageADxNuNJQShmAqnh26YRQ18f4beVkUMVIRSyJFyfCszta_W2OqzCTO5KXFzhvhDxhsA2JwdKVZQ31MdmlckdFncmD3UbDXVB-YbGhGNeS1YvzbYgZwQVWhE8yW08dqU3m1Tc8fg95_qpkyLqeeh8LqZR9H9bEKNVkiztetswlanObE1zXSjjIq3X74tVdaR9FnW4roZc4VN6enPKQi1s_hr5vC7u78kRZOSphi5-bo1PhPJo4-fM" },
             new() { Name = "Cyber City Kit",    Description = "Urban-inspired jersey inspired by city lights.", Price = 110.00m, Stock = 75, CategoryId = clubKits.Id,      IsActive = true, ImageUrl = "https://lh3.googleusercontent.com/aida-public/AB6AXuBiCM5-5VPmXi7xnd7pgB70Yqzb6TijBZIINhunQsPDCCnwIkKqHMkQDj2j8Ie_gliKGMUI9OeubepYDM69dThHyU1QZpu7O2hgswQjHkkx4FoGmp4unE3N8Qdnl7zfQsCM_Ivz30XcqZpEpXxurSDVm8RploIXSxZ9wnE_4J44eR1bPNu9itNruBjwTc3ADveIfyom6esX-gcp-UVmVkY-j3r94QJmHGhbeQbdXu1MfvVPqLnuof65AyAK-qvTf18pEgIRjvcvths" },
@@ -35,9 +40,19 @@ public static class DbInitializer
             new() { Name = "Heritage FC Strip", Description = "Classic 90s-inspired club strip with modern fabric.", Price = 89.00m,  Stock = 100, CategoryId = retro.Id,         IsActive = true, ImageUrl = "" },
             new() { Name = "Galactico Away",    Description = "Official-style away kit with ultra-light construction.", Price = 119.00m, Stock = 60, CategoryId = nationalTeams.Id, IsActive = true, ImageUrl = "" },
             new() { Name = "Pulse Home Kit",    Description = "Home kit with embedded biometric sensor zones.", Price = 135.00m, Stock = 45, CategoryId = clubKits.Id,      IsActive = true, ImageUrl = "" },
+            new() { Name = "Liverpool FC Home Kit 2024/25", Description = "Official Liverpool FC home shirt for the 2024/25 season.", Price = 95.00m, Stock = 150, CategoryId = clubKits.Id, IsActive = true, ImageUrl = "https://seeklogo.com/images/L/liverpool-fc-logo-62B573DC29-seeklogo.com.png" },
+            new() { Name = "Manchester City Home Kit 2024/25", Description = "Sky blue Puma Manchester City home shirt.", Price = 95.00m, Stock = 120, CategoryId = clubKits.Id, IsActive = true, ImageUrl = "https://seeklogo.com/images/M/manchester-city-fc-logo-77EA29A102-seeklogo.com.png" },
+            new() { Name = "Real Madrid Home Kit 2024/25", Description = "Classic white Adidas Real Madrid home kit.", Price = 105.00m, Stock = 200, CategoryId = clubKits.Id, IsActive = true, ImageUrl = "https://seeklogo.com/images/R/real-madrid-club-de-futbol-logo-263B2CE2C3-seeklogo.com.png" }
         };
 
-        db.Products.AddRange(products);
+        foreach (var product in productsToSeed)
+        {
+            if (!await db.Products.AnyAsync(p => p.Name == product.Name))
+            {
+                db.Products.Add(product);
+            }
+        }
+
         await db.SaveChangesAsync();
     }
 

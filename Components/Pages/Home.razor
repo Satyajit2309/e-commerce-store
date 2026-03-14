@@ -1,4 +1,7 @@
 @page "/"
+@using EcommerceStore.Services.Interfaces
+@inject ICartService CartService
+@inject AuthenticationStateProvider AuthStateProvider
 
 <PageTitle>Futurbol | Football Jersey Store</PageTitle>
 
@@ -107,9 +110,9 @@
                         </a>
                     </NotAuthorized>
                 </AuthorizeView>
-                <button class="border border-white/30 px-4 py-2 text-[10px] lab-readout hover:bg-white hover:text-black transition-all">
-                    Cart (0)
-                </button>
+                <a href="/cart" class="border border-white/30 px-4 py-2 text-[10px] lab-readout hover:bg-white hover:text-black transition-all no-underline text-white">
+                    Cart (@_cartCount)
+                </a>
             </div>
         </div>
     </nav>
@@ -361,3 +364,16 @@
     </footer>
 </div>
 
+@code {
+    private int _cartCount;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var userId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (!string.IsNullOrEmpty(userId))
+        {
+            _cartCount = await CartService.GetCartCountAsync(userId);
+        }
+    }
+}

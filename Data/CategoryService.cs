@@ -48,8 +48,15 @@ public class CategoryService : ICategoryService
         if (category is null) return false;
         if (category.Products.Any()) return false; // prevent deleting with products
 
-        _db.Categories.Remove(category);
-        await _db.SaveChangesAsync();
-        return true;
+        try
+        {
+            _db.Categories.Remove(category);
+            await _db.SaveChangesAsync();
+            return true;
+        }
+        catch (DbUpdateException)
+        {
+            return false;
+        }
     }
 }
